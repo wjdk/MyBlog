@@ -15,7 +15,7 @@ type EditPostPageProps = {
 export default async function EditPostPage({ params }: EditPostPageProps) {
   await requireAdmin();
   const { id } = await params;
-  const post = getPostById(Number(id));
+  const post = await getPostById(Number(id));
 
   if (!post) {
     notFound();

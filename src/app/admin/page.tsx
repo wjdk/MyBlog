@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const posts = listPosts({ includeDrafts: true });
+  const posts = await listPosts({ includeDrafts: true });
 
   return (
     <main>

@@ -10,7 +10,7 @@ type SearchPageProps = {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q = "" } = await searchParams;
-  const posts = q ? listPosts({ query: q }) : [];
+  const posts = q ? await listPosts({ query: q }) : [];
 
   return (
     <main>

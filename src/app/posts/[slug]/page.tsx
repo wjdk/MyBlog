@@ -22,7 +22,7 @@ export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return { title: "文章不存在" };
@@ -42,16 +42,18 @@ export async function generateMetadata({
 
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  incrementViews(post.id);
-  const comments = listComments(post.id);
-  const related = getRelatedPosts(post);
-  const adjacent = getAdjacentPosts(post);
+  await incrementViews(post.id);
+  const [comments, related, adjacent] = await Promise.all([
+    listComments(post.id),
+    getRelatedPosts(post),
+    getAdjacentPosts(post),
+  ]);
 
   return (
     <main>

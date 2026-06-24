@@ -16,8 +16,7 @@ import {
   requireAdmin,
   setAdminSession,
 } from "@/lib/auth";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -65,7 +64,7 @@ export async function logoutAction() {
 
 export async function createPostAction(formData: FormData) {
   await requireAdmin();
-  const post = createPost(readPostForm(formData));
+  const post = await createPost(readPostForm(formData));
 
   revalidateAll();
   redirect(post?.status === "published" ? `/posts/${post.slug}` : "/admin");
@@ -73,7 +72,7 @@ export async function createPostAction(formData: FormData) {
 
 export async function updatePostAction(id: number, formData: FormData) {
   await requireAdmin();
-  const post = updatePost(id, readPostForm(formData));
+  const post = await updatePost(id, readPostForm(formData));
 
   revalidateAll();
 
@@ -86,7 +85,7 @@ export async function updatePostAction(id: number, formData: FormData) {
 
 export async function deletePostAction(id: number) {
   await requireAdmin();
-  deletePost(id);
+  await deletePost(id);
 
   revalidateAll();
   redirect("/admin");
@@ -97,7 +96,7 @@ export async function addCommentAction(postId: number, slug: string, formData: F
   const content = String(formData.get("content") || "").trim();
 
   if (author && content) {
-    addComment(postId, author.slice(0, 40), content.slice(0, 800));
+    await addComment(postId, author.slice(0, 40), content.slice(0, 800));
   }
 
   revalidatePath(`/posts/${slug}`);
@@ -105,14 +104,14 @@ export async function addCommentAction(postId: number, slug: string, formData: F
 }
 
 export async function likePostAction(postId: number, slug: string) {
-  likePost(postId);
+  await likePost(postId);
   revalidatePath(`/posts/${slug}`);
   redirect(`/posts/${slug}`);
 }
 
 export async function deleteCommentAction(commentId: number) {
   await requireAdmin();
-  deleteComment(commentId);
+  await deleteComment(commentId);
 
   revalidatePath("/admin/comments");
   redirect("/admin/comments");
@@ -126,13 +125,12 @@ export async function uploadImageAction(formData: FormData) {
     redirect("/admin/media?error=1");
   }
 
-  const extension = path.extname(file.name).toLowerCase() || ".jpg";
-  const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, safeName), Buffer.from(await file.arrayBuffer()));
+  const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
+  const blob = await put(`blog/${Date.now()}-${safeName}`, file, {
+    access: "public",
+  });
 
-  redirect(`/admin/media?url=${encodeURIComponent(`/uploads/${safeName}`)}`);
+  redirect(`/admin/media?url=${encodeURIComponent(blob.url)}`);
 }
 
 function revalidateAll() {

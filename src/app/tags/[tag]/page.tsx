@@ -11,7 +11,7 @@ type TagPageProps = {
 export default async function TagPage({ params }: TagPageProps) {
   const { tag } = await params;
   const name = decodeURIComponent(tag);
-  const posts = listPosts({ tag: name });
+  const posts = await listPosts({ tag: name });
 
   return (
     <main>

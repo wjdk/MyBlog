@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CommentsAdminPage() {
   await requireAdmin();
-  const comments = listAllComments();
+  const comments = await listAllComments();
 
   return (
     <main>
@@ -19,8 +19,8 @@ export default async function CommentsAdminPage() {
         </Link>
         <h1 className="mt-6 text-3xl font-semibold text-stone-950">评论管理</h1>
         <div className="mt-8 space-y-4">
-          {comments.map((comment) => {
-            const post = getPostById(comment.postId);
+          {await Promise.all(comments.map(async (comment) => {
+            const post = await getPostById(comment.postId);
             return (
               <div key={comment.id} className="rounded-lg border border-stone-200 bg-white p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -39,7 +39,7 @@ export default async function CommentsAdminPage() {
                 <p className="mt-4 leading-7 text-stone-700">{comment.content}</p>
               </div>
             );
-          })}
+          }))}
         </div>
       </section>
     </main>

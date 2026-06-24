@@ -11,7 +11,7 @@ type CategoryPageProps = {
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const name = decodeURIComponent(category);
-  const posts = listPosts({ category: name });
+  const posts = await listPosts({ category: name });
 
   return (
     <main>

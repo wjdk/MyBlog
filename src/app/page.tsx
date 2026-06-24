@@ -5,10 +5,12 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const posts = listPosts();
-  const categories = listCategories();
-  const tags = listTags();
+export default async function Home() {
+  const [posts, categories, tags] = await Promise.all([
+    listPosts(),
+    listCategories(),
+    listTags(),
+  ]);
 
   return (
     <main>

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({ posts: listPosts({ includeDrafts: true }) });
+  return NextResponse.json({ posts: await listPosts({ includeDrafts: true }) });
 }
 
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const post = createPost({
+  const post = await createPost({
     title: String(body.title || ""),
     slug: String(body.slug || ""),
     excerpt: String(body.excerpt || ""),

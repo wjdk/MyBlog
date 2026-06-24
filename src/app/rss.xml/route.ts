@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const posts = listPosts();
+  const posts = await listPosts();
   const items = posts
     .map(
       (post) => `

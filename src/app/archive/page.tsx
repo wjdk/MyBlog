@@ -4,8 +4,8 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default function ArchivePage() {
-  const posts = listPosts();
+export default async function ArchivePage() {
+  const posts = await listPosts();
 
   return (
     <main>

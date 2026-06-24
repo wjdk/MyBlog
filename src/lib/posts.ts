@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { ensureSchema, getSql, hasDatabase } from "@/lib/db";
 
 export type PostStatus = "draft" | "published";
 
@@ -39,8 +39,8 @@ type PostRow = {
   cover_image: string;
   views: number;
   likes: number;
-  created_at: string;
-  updated_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
 };
 
 type CommentRow = {
@@ -49,7 +49,7 @@ type CommentRow = {
   author: string;
   content: string;
   status: "approved" | "hidden";
-  created_at: string;
+  created_at: string | Date;
 };
 
 export type PostInput = {
@@ -71,9 +71,13 @@ export type PostFilters = {
   limit?: number;
 };
 
+function unavailablePosts(): Post[] {
+  return [];
+}
+
 function mapPost(row: PostRow): Post {
   return {
-    id: row.id,
+    id: Number(row.id),
     title: row.title,
     slug: row.slug,
     excerpt: row.excerpt,
@@ -82,212 +86,224 @@ function mapPost(row: PostRow): Post {
     category: row.category,
     tags: splitTags(row.tags),
     coverImage: row.cover_image,
-    views: row.views,
-    likes: row.likes,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    views: Number(row.views),
+    likes: Number(row.likes),
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
   };
 }
 
 function mapComment(row: CommentRow): Comment {
   return {
-    id: row.id,
-    postId: row.post_id,
+    id: Number(row.id),
+    postId: Number(row.post_id),
     author: row.author,
     content: row.content,
     status: row.status,
-    createdAt: row.created_at,
+    createdAt: toIso(row.created_at),
   };
 }
 
-export function listPosts(filters: PostFilters = {}) {
-  const conditions: string[] = [];
-  const params: Record<string, string | number> = {};
-
-  if (!filters.includeDrafts) {
-    conditions.push("status = 'published'");
+export async function listPosts(filters: PostFilters = {}) {
+  if (!hasDatabase()) {
+    return unavailablePosts();
   }
 
-  if (filters.query) {
-    conditions.push(
-      "(title LIKE @query OR excerpt LIKE @query OR content LIKE @query OR tags LIKE @query)",
-    );
-    params.query = `%${filters.query}%`;
-  }
+  await ensureSchema();
+  const sql = getSql();
+  const limit = filters.limit || 100;
 
-  if (filters.category) {
-    conditions.push("category = @category");
-    params.category = filters.category;
-  }
+  const rows = await sql`
+    SELECT *
+    FROM posts
+    WHERE
+      (${filters.includeDrafts}::boolean OR status = 'published')
+      AND (${filters.query || null}::text IS NULL OR (
+        title ILIKE ${`%${filters.query || ""}%`}
+        OR excerpt ILIKE ${`%${filters.query || ""}%`}
+        OR content ILIKE ${`%${filters.query || ""}%`}
+        OR tags ILIKE ${`%${filters.query || ""}%`}
+      ))
+      AND (${filters.category || null}::text IS NULL OR category = ${filters.category || ""})
+      AND (${filters.tag || null}::text IS NULL OR tags ILIKE ${`%${filters.tag || ""}%`})
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
 
-  if (filters.tag) {
-    conditions.push("tags LIKE @tag");
-    params.tag = `%${filters.tag}%`;
-  }
-
-  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-  const limit = filters.limit ? "LIMIT @limit" : "";
-
-  if (filters.limit) {
-    params.limit = filters.limit;
-  }
-
-  const rows = getDb()
-    .prepare(`SELECT * FROM posts ${where} ORDER BY datetime(created_at) DESC ${limit}`)
-    .all(params) as PostRow[];
-
-  return rows.map(mapPost);
+  return (rows as PostRow[]).map(mapPost);
 }
 
-export function getPostBySlug(slug: string, options: { includeDrafts?: boolean } = {}) {
-  const row = getDb()
-    .prepare(
-      `SELECT * FROM posts WHERE slug = ? ${
-        options.includeDrafts ? "" : "AND status = 'published'"
-      }`,
-    )
-    .get(slug) as PostRow | undefined;
+export async function getPostBySlug(
+  slug: string,
+  options: { includeDrafts?: boolean } = {},
+) {
+  if (!hasDatabase()) {
+    return null;
+  }
+
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT *
+    FROM posts
+    WHERE slug = ${slug}
+      AND (${options.includeDrafts || false}::boolean OR status = 'published')
+    LIMIT 1
+  `;
+  const row = rows[0] as PostRow | undefined;
 
   return row ? mapPost(row) : null;
 }
 
-export function getPostById(id: number) {
-  const row = getDb()
-    .prepare("SELECT * FROM posts WHERE id = ?")
-    .get(id) as PostRow | undefined;
+export async function getPostById(id: number) {
+  if (!hasDatabase()) {
+    return null;
+  }
+
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`SELECT * FROM posts WHERE id = ${id} LIMIT 1`;
+  const row = rows[0] as PostRow | undefined;
 
   return row ? mapPost(row) : null;
 }
 
-export function createPost(input: PostInput) {
-  const now = new Date().toISOString();
-  const slug = uniqueSlug(input.slug || input.title);
-
-  const result = getDb()
-    .prepare(
-      `INSERT INTO posts (
-        title, slug, excerpt, content, status, category, tags, cover_image,
-        views, likes, created_at, updated_at
-      )
-       VALUES (
-        @title, @slug, @excerpt, @content, @status, @category, @tags,
-        @coverImage, 0, 0, @createdAt, @updatedAt
-      )`,
+export async function createPost(input: PostInput) {
+  await ensureSchema();
+  const sql = getSql();
+  const slug = await uniqueSlug(input.slug || input.title);
+  const rows = await sql`
+    INSERT INTO posts (
+      title, slug, excerpt, content, status, category, tags, cover_image,
+      views, likes, created_at, updated_at
     )
-    .run({
-      title: input.title,
-      slug,
-      excerpt: input.excerpt,
-      content: input.content,
-      status: input.status,
-      category: input.category,
-      tags: input.tags.join(","),
-      coverImage: input.coverImage,
-      createdAt: now,
-      updatedAt: now,
-    });
+    VALUES (
+      ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
+      ${input.status}, ${input.category}, ${input.tags.join(",")},
+      ${input.coverImage}, 0, 0, NOW(), NOW()
+    )
+    RETURNING *
+  `;
 
-  return getPostById(Number(result.lastInsertRowid));
+  return mapPost(rows[0] as PostRow);
 }
 
-export function updatePost(id: number, input: PostInput) {
-  const existing = getPostById(id);
+export async function updatePost(id: number, input: PostInput) {
+  const existing = await getPostById(id);
 
   if (!existing) {
     return null;
   }
 
-  const slug = uniqueSlug(input.slug || input.title, id);
-  getDb()
-    .prepare(
-      `UPDATE posts
-       SET title = @title,
-           slug = @slug,
-           excerpt = @excerpt,
-           content = @content,
-           status = @status,
-           category = @category,
-           tags = @tags,
-           cover_image = @coverImage,
-           updated_at = @updatedAt
-       WHERE id = @id`,
-    )
-    .run({
-      id,
-      title: input.title,
-      slug,
-      excerpt: input.excerpt,
-      content: input.content,
-      status: input.status,
-      category: input.category,
-      tags: input.tags.join(","),
-      coverImage: input.coverImage,
-      updatedAt: new Date().toISOString(),
-    });
+  const sql = getSql();
+  const slug = await uniqueSlug(input.slug || input.title, id);
+  const rows = await sql`
+    UPDATE posts
+    SET title = ${input.title},
+        slug = ${slug},
+        excerpt = ${input.excerpt},
+        content = ${input.content},
+        status = ${input.status},
+        category = ${input.category},
+        tags = ${input.tags.join(",")},
+        cover_image = ${input.coverImage},
+        updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `;
 
-  return getPostById(id);
+  return rows[0] ? mapPost(rows[0] as PostRow) : null;
 }
 
-export function deletePost(id: number) {
-  getDb().prepare("DELETE FROM comments WHERE post_id = ?").run(id);
-  getDb().prepare("DELETE FROM posts WHERE id = ?").run(id);
+export async function deletePost(id: number) {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`DELETE FROM posts WHERE id = ${id}`;
 }
 
-export function incrementViews(id: number) {
-  getDb().prepare("UPDATE posts SET views = views + 1 WHERE id = ?").run(id);
+export async function incrementViews(id: number) {
+  if (!hasDatabase()) {
+    return;
+  }
+
+  await ensureSchema();
+  const sql = getSql();
+  await sql`UPDATE posts SET views = views + 1 WHERE id = ${id}`;
 }
 
-export function likePost(id: number) {
-  getDb().prepare("UPDATE posts SET likes = likes + 1 WHERE id = ?").run(id);
+export async function likePost(id: number) {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`UPDATE posts SET likes = likes + 1 WHERE id = ${id}`;
 }
 
-export function addComment(postId: number, author: string, content: string) {
-  getDb()
-    .prepare(
-      `INSERT INTO comments (post_id, author, content, status, created_at)
-       VALUES (?, ?, ?, 'approved', ?)`,
-    )
-    .run(postId, author, content, new Date().toISOString());
+export async function addComment(postId: number, author: string, content: string) {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO comments (post_id, author, content, status, created_at)
+    VALUES (${postId}, ${author}, ${content}, 'approved', NOW())
+  `;
 }
 
-export function listComments(postId: number, includeHidden = false) {
-  const rows = getDb()
-    .prepare(
-      `SELECT * FROM comments WHERE post_id = ? ${
-        includeHidden ? "" : "AND status = 'approved'"
-      } ORDER BY datetime(created_at) DESC`,
-    )
-    .all(postId) as CommentRow[];
+export async function listComments(postId: number, includeHidden = false) {
+  if (!hasDatabase()) {
+    return [];
+  }
 
-  return rows.map(mapComment);
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT *
+    FROM comments
+    WHERE post_id = ${postId}
+      AND (${includeHidden}::boolean OR status = 'approved')
+    ORDER BY created_at DESC
+  `;
+
+  return (rows as CommentRow[]).map(mapComment);
 }
 
-export function deleteComment(id: number) {
-  getDb().prepare("DELETE FROM comments WHERE id = ?").run(id);
+export async function deleteComment(id: number) {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`DELETE FROM comments WHERE id = ${id}`;
 }
 
-export function listAllComments() {
-  const rows = getDb()
-    .prepare("SELECT * FROM comments ORDER BY datetime(created_at) DESC")
-    .all() as CommentRow[];
+export async function listAllComments() {
+  if (!hasDatabase()) {
+    return [];
+  }
 
-  return rows.map(mapComment);
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`SELECT * FROM comments ORDER BY created_at DESC`;
+
+  return (rows as CommentRow[]).map(mapComment);
 }
 
-export function listCategories() {
-  const rows = getDb()
-    .prepare(
-      "SELECT category, COUNT(*) as count FROM posts WHERE status = 'published' GROUP BY category ORDER BY category ASC",
-    )
-    .all() as { category: string; count: number }[];
+export async function listCategories() {
+  if (!hasDatabase()) {
+    return [];
+  }
 
-  return rows;
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT category, COUNT(*)::int AS count
+    FROM posts
+    WHERE status = 'published'
+    GROUP BY category
+    ORDER BY category ASC
+  `;
+
+  return rows as { category: string; count: number }[];
 }
 
-export function listTags() {
+export async function listTags() {
   const counts = new Map<string, number>();
 
-  for (const post of listPosts()) {
+  for (const post of await listPosts()) {
     for (const tag of post.tags) {
       counts.set(tag, (counts.get(tag) || 0) + 1);
     }
@@ -298,8 +314,8 @@ export function listTags() {
     .sort((a, b) => a.tag.localeCompare(b.tag));
 }
 
-export function getAdjacentPosts(post: Post) {
-  const posts = listPosts();
+export async function getAdjacentPosts(post: Post) {
+  const posts = await listPosts();
   const index = posts.findIndex((item) => item.id === post.id);
 
   return {
@@ -308,8 +324,8 @@ export function getAdjacentPosts(post: Post) {
   };
 }
 
-export function getRelatedPosts(post: Post) {
-  return listPosts({ limit: 8 })
+export async function getRelatedPosts(post: Post) {
+  return (await listPosts({ limit: 8 }))
     .filter((item) => item.id !== post.id)
     .filter(
       (item) =>
@@ -319,12 +335,12 @@ export function getRelatedPosts(post: Post) {
     .slice(0, 3);
 }
 
-function uniqueSlug(value: string, currentId?: number) {
+async function uniqueSlug(value: string, currentId?: number) {
   const base = slugify(value);
   let candidate = base;
   let index = 2;
 
-  while (slugExists(candidate, currentId)) {
+  while (await slugExists(candidate, currentId)) {
     candidate = `${base}-${index}`;
     index += 1;
   }
@@ -332,12 +348,12 @@ function uniqueSlug(value: string, currentId?: number) {
   return candidate;
 }
 
-function slugExists(slug: string, currentId?: number) {
-  const row = getDb()
-    .prepare("SELECT id FROM posts WHERE slug = ?")
-    .get(slug) as { id: number } | undefined;
+async function slugExists(slug: string, currentId?: number) {
+  const sql = getSql();
+  const rows = await sql`SELECT id FROM posts WHERE slug = ${slug} LIMIT 1`;
+  const row = rows[0] as { id: number } | undefined;
 
-  return Boolean(row && row.id !== currentId);
+  return Boolean(row && Number(row.id) !== currentId);
 }
 
 export function splitTags(value: string) {
@@ -355,4 +371,8 @@ export function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 
   return slug || `post-${Date.now()}`;
+}
+
+function toIso(value: string | Date) {
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
