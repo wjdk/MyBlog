@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "我的博客",
-  description: "一个自己掌控内容与数据的动态博客",
+  title: "池鱼的个人博客",
+  description: "记录想法、项目和长期积累的个人博客",
 };
 
 export default function RootLayout({

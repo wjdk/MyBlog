@@ -9,7 +9,7 @@ export async function SiteHeader() {
     <header className="border-b border-stone-200 bg-[#f7f6f2]/90 backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3">
         <Link href="/" className="text-lg font-semibold text-stone-950">
-          我的博客
+          池鱼的个人博客
         </Link>
         <form action="/search" className="order-3 flex w-full max-w-sm md:order-2">
           <input
