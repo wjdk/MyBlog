@@ -112,12 +112,13 @@ export async function listPosts(filters: PostFilters = {}) {
   await ensureSchema();
   const sql = getSql();
   const limit = filters.limit || 100;
+  const includeDrafts = Boolean(filters.includeDrafts);
 
   const rows = await sql`
     SELECT *
     FROM posts
     WHERE
-      (${filters.includeDrafts}::boolean OR status = 'published')
+      (${includeDrafts}::boolean OR status = 'published')
       AND (${filters.query || null}::text IS NULL OR (
         title ILIKE ${`%${filters.query || ""}%`}
         OR excerpt ILIKE ${`%${filters.query || ""}%`}
