@@ -69,7 +69,7 @@ export default async function AdminPage() {
                 </span>
                 <span className="text-sm text-stone-600">{post.category}</span>
                 <span className="text-sm text-stone-600">
-                  {post.views} 读 / {post.likes} 赞
+                  {post.views} 读 / {post.commentCount} 评论
                 </span>
                 <div className="flex items-center gap-2">
                   <Link

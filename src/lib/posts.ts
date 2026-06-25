@@ -13,7 +13,7 @@ export type Post = {
   tags: string[];
   coverImage: string;
   views: number;
-  likes: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,7 +38,7 @@ type PostRow = {
   tags: string;
   cover_image: string;
   views: number;
-  likes: number;
+  comment_count?: number;
   created_at: string | Date;
   updated_at: string | Date;
 };
@@ -88,7 +88,7 @@ function mapPost(row: PostRow): Post {
     tags: splitTags(row.tags),
     coverImage: row.cover_image,
     views: Number(row.views),
-    likes: Number(row.likes),
+    commentCount: Number(row.comment_count || 0),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };
@@ -116,7 +116,14 @@ export async function listPosts(filters: PostFilters = {}) {
   const includeDrafts = Boolean(filters.includeDrafts);
 
   const rows = await sql`
-    SELECT *
+    SELECT
+      posts.*,
+      (
+        SELECT COUNT(*)::int
+        FROM comments
+        WHERE comments.post_id = posts.id
+          AND comments.status = 'approved'
+      ) AS comment_count
     FROM posts
     WHERE
       (${includeDrafts}::boolean OR status = 'published')
@@ -147,7 +154,14 @@ export async function getPostBySlug(
   const sql = getSql();
   const candidates = postSlugCandidates(slug);
   const rows = await sql`
-    SELECT *
+    SELECT
+      posts.*,
+      (
+        SELECT COUNT(*)::int
+        FROM comments
+        WHERE comments.post_id = posts.id
+          AND comments.status = 'approved'
+      ) AS comment_count
     FROM posts
     WHERE (
       slug = ${candidates[0]}
@@ -169,7 +183,19 @@ export async function getPostById(id: number) {
 
   await ensureSchema();
   const sql = getSql();
-  const rows = await sql`SELECT * FROM posts WHERE id = ${id} LIMIT 1`;
+  const rows = await sql`
+    SELECT
+      posts.*,
+      (
+        SELECT COUNT(*)::int
+        FROM comments
+        WHERE comments.post_id = posts.id
+          AND comments.status = 'approved'
+      ) AS comment_count
+    FROM posts
+    WHERE id = ${id}
+    LIMIT 1
+  `;
   const row = rows[0] as PostRow | undefined;
 
   return row ? mapPost(row) : null;
@@ -184,12 +210,12 @@ export async function createPost(input: PostInput) {
     ? await sql`
         INSERT INTO posts (
           title, slug, excerpt, content, status, category, tags, cover_image,
-          views, likes, submission_key, created_at, updated_at
+          views, submission_key, created_at, updated_at
         )
         VALUES (
           ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
           ${input.status}, ${input.category}, ${input.tags.join(",")},
-          ${input.coverImage}, 0, 0, ${submissionKey}, NOW(), NOW()
+          ${input.coverImage}, 0, ${submissionKey}, NOW(), NOW()
         )
         ON CONFLICT (submission_key) DO UPDATE
         SET submission_key = EXCLUDED.submission_key
@@ -198,12 +224,12 @@ export async function createPost(input: PostInput) {
     : await sql`
         INSERT INTO posts (
           title, slug, excerpt, content, status, category, tags, cover_image,
-          views, likes, created_at, updated_at
+          views, created_at, updated_at
         )
         VALUES (
           ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
           ${input.status}, ${input.category}, ${input.tags.join(",")},
-          ${input.coverImage}, 0, 0, NOW(), NOW()
+          ${input.coverImage}, 0, NOW(), NOW()
         )
         RETURNING *
       `;
@@ -252,12 +278,6 @@ export async function incrementViews(id: number) {
   await ensureSchema();
   const sql = getSql();
   await sql`UPDATE posts SET views = views + 1 WHERE id = ${id}`;
-}
-
-export async function likePost(id: number) {
-  await ensureSchema();
-  const sql = getSql();
-  await sql`UPDATE posts SET likes = likes + 1 WHERE id = ${id}`;
 }
 
 export async function addComment(postId: number, author: string, content: string) {

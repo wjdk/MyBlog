@@ -24,6 +24,8 @@ export function PostCard({ post }: { post: Post }) {
           <span>{post.category}</span>
           <span>·</span>
           <span>{post.views} 阅读</span>
+          <span>·</span>
+          <span>{post.commentCount} 评论</span>
         </div>
         <h3 className="mt-4 text-2xl font-semibold leading-snug text-stone-950 text-balance transition group-hover:text-[#24575a]">
           {post.title}

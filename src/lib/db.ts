@@ -46,7 +46,6 @@ async function createSchema() {
       tags TEXT NOT NULL DEFAULT '',
       cover_image TEXT NOT NULL DEFAULT '',
       views INTEGER NOT NULL DEFAULT 0,
-      likes INTEGER NOT NULL DEFAULT 0,
       submission_key TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -76,7 +75,7 @@ async function createSchema() {
     await sql`
       INSERT INTO posts (
         title, slug, excerpt, content, status, category, tags, cover_image,
-        views, likes, created_at, updated_at
+        views, created_at, updated_at
       )
       VALUES (
         '第一篇博客：从这里开始',
@@ -88,12 +87,11 @@ async function createSchema() {
 
 - 可以新建、编辑、删除文章
 - 支持分类、标签、封面图和 Markdown
-- 支持评论、点赞、浏览量、搜索、RSS 和 Sitemap',
+- 支持评论、浏览量、搜索、RSS 和 Sitemap',
         'published',
         '项目记录',
         'Next.js,PostgreSQL,Vercel Blob,个人博客',
         '',
-        0,
         0,
         NOW(),
         NOW()

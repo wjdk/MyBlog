@@ -5,7 +5,6 @@ import {
   createPost,
   deleteComment,
   deletePost,
-  likePost,
   postPath,
   splitTags,
   updatePost,
@@ -118,12 +117,6 @@ export async function addCommentAction(
 
   revalidatePath(postPath(slug));
   redirect(`${postPath(slug)}#comments`);
-}
-
-export async function likePostAction(postId: number, slug: string) {
-  await likePost(postId);
-  revalidatePath(postPath(slug));
-  redirect(postPath(slug));
 }
 
 export async function deleteCommentAction(commentId: number) {

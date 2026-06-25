@@ -1,4 +1,4 @@
-import { addCommentAction, likePostAction } from "@/app/actions";
+import { addCommentAction } from "@/app/actions";
 import { MarkdownView } from "@/components/markdown-view";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -81,7 +81,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 <span>·</span>
                 <span>{post.views + 1} 阅读</span>
                 <span>·</span>
-                <span>{post.likes} 赞</span>
+                <span>{comments.length} 评论</span>
               </div>
               <h1 className="mt-5 max-w-4xl break-words font-serif text-4xl font-semibold leading-[1.08] text-stone-950 text-balance sm:text-5xl lg:text-6xl">
                 {post.title}
@@ -112,12 +112,6 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="max-w-4xl rounded-[1.5rem] bg-[#fffdf8]/72 px-5 py-7 shadow-[0_1px_0_rgba(28,25,23,0.08),0_24px_70px_rgba(47,48,43,0.06)] sm:px-8 lg:px-10">
             <MarkdownView content={post.content} />
           </div>
-
-          <form action={likePostAction.bind(null, post.id, post.slug)} className="mt-10">
-            <button className="rounded-full bg-[#2f6f73] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#24575a] active:translate-y-0">
-              点赞这篇文章
-            </button>
-          </form>
 
           <nav className="mt-10 grid max-w-4xl gap-4 border-y border-stone-900/10 py-6 sm:grid-cols-2">
             <AdjacentLink label="上一篇" post={adjacent.previous} />
