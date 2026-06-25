@@ -1,5 +1,5 @@
 import { SiteHeader } from "@/components/site-header";
-import { listPosts } from "@/lib/posts";
+import { listPosts, postPath } from "@/lib/posts";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export default async function ArchivePage() {
             posts.map((post) => (
               <Link
                 key={post.id}
-                href={`/posts/${post.slug}`}
+                href={postPath(post.slug)}
                 className="grid gap-2 rounded-2xl bg-[#fffdf8]/82 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(47,111,115,0.1)] sm:grid-cols-[8rem_1fr]"
               >
                 <span className="font-mono text-sm text-stone-500">

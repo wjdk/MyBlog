@@ -7,6 +7,7 @@ import {
   getRelatedPosts,
   incrementViews,
   listComments,
+  postPath,
 } from "@/lib/posts";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -143,7 +144,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 {related.map((item) => (
                   <Link
                     key={item.id}
-                    href={`/posts/${item.slug}`}
+                    href={postPath(item.slug)}
                     className="block rounded-2xl bg-[#fffdf8]/85 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(47,111,115,0.1)]"
                   >
                     <p className="font-semibold text-stone-950">{item.title}</p>
@@ -216,7 +217,7 @@ function AdjacentLink({
 
   return (
     <Link
-      href={`/posts/${post.slug}`}
+      href={postPath(post.slug)}
       className={`block rounded-2xl px-3 py-2 transition hover:bg-white/60 ${
         alignRight ? "text-right" : ""
       }`}

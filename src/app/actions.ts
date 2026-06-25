@@ -6,6 +6,7 @@ import {
   deleteComment,
   deletePost,
   likePost,
+  postPath,
   splitTags,
   updatePost,
   type PostInput,
@@ -69,7 +70,12 @@ export async function createPostAction(formData: FormData) {
   const post = await createPost(readPostForm(formData));
 
   revalidateAll();
-  redirect(post?.status === "published" ? `/posts/${post.slug}` : "/admin");
+  if (post?.status === "published") {
+    revalidatePath(postPath(post.slug));
+    redirect("/");
+  }
+
+  redirect("/admin");
 }
 
 export async function updatePostAction(id: number, formData: FormData) {
@@ -82,7 +88,12 @@ export async function updatePostAction(id: number, formData: FormData) {
     redirect("/admin");
   }
 
-  redirect(post.status === "published" ? `/posts/${post.slug}` : "/admin");
+  if (post.status === "published") {
+    revalidatePath(postPath(post.slug));
+    redirect("/");
+  }
+
+  redirect("/admin");
 }
 
 export async function deletePostAction(id: number) {
@@ -105,14 +116,14 @@ export async function addCommentAction(
     await addComment(postId, author.slice(0, 40), content.slice(0, 800));
   }
 
-  revalidatePath(`/posts/${slug}`);
-  redirect(`/posts/${slug}#comments`);
+  revalidatePath(postPath(slug));
+  redirect(`${postPath(slug)}#comments`);
 }
 
 export async function likePostAction(postId: number, slug: string) {
   await likePost(postId);
-  revalidatePath(`/posts/${slug}`);
-  redirect(`/posts/${slug}`);
+  revalidatePath(postPath(slug));
+  redirect(postPath(slug));
 }
 
 export async function deleteCommentAction(commentId: number) {

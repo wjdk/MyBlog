@@ -1,4 +1,4 @@
-import { listPosts } from "@/lib/posts";
+import { listPosts, postPath } from "@/lib/posts";
 import type { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
     },
     ...posts.map((post) => ({
-      url: `${siteUrl}/posts/${post.slug}`,
+      url: `${siteUrl}${postPath(post.slug)}`,
       lastModified: new Date(post.updatedAt),
     })),
   ];

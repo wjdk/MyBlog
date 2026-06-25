@@ -1,10 +1,10 @@
-import type { Post } from "@/lib/posts";
+import { postPath, type Post } from "@/lib/posts";
 import Link from "next/link";
 
 export function PostCard({ post }: { post: Post }) {
   return (
     <Link
-      href={`/posts/${post.slug}`}
+      href={postPath(post.slug)}
       className="group block overflow-hidden rounded-[1.25rem] bg-[#fffdf8] shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_0_rgba(47,111,115,0.28),0_24px_60px_rgba(47,111,115,0.14)] active:translate-y-0"
     >
       {post.coverImage ? (

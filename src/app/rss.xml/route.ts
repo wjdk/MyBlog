@@ -1,4 +1,4 @@
-import { listPosts } from "@/lib/posts";
+import { listPosts, postPath } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,8 @@ export async function GET() {
       (post) => `
         <item>
           <title><![CDATA[${post.title}]]></title>
-          <link>${siteUrl}/posts/${post.slug}</link>
-          <guid>${siteUrl}/posts/${post.slug}</guid>
+          <link>${siteUrl}${postPath(post.slug)}</link>
+          <guid>${siteUrl}${postPath(post.slug)}</guid>
           <description><![CDATA[${post.excerpt}]]></description>
           <pubDate>${new Date(post.createdAt).toUTCString()}</pubDate>
         </item>`,

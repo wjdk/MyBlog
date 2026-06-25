@@ -145,10 +145,15 @@ export async function getPostBySlug(
 
   await ensureSchema();
   const sql = getSql();
+  const candidates = postSlugCandidates(slug);
   const rows = await sql`
     SELECT *
     FROM posts
-    WHERE slug = ${slug}
+    WHERE (
+      slug = ${candidates[0]}
+      OR slug = ${candidates[1]}
+      OR slug = ${candidates[2]}
+    )
       AND (${options.includeDrafts || false}::boolean OR status = 'published')
     LIMIT 1
   `;
@@ -389,6 +394,30 @@ export function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 
   return slug || `post-${Date.now()}`;
+}
+
+export function postPath(slug: string) {
+  return `/posts/${encodeURIComponent(slug)}`;
+}
+
+export function decodeRouteSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
+function postSlugCandidates(slug: string) {
+  const decoded = decodeRouteSlug(slug);
+  const encoded = encodeURIComponent(decoded);
+  const candidates = [...new Set([slug, decoded, encoded])];
+
+  while (candidates.length < 3) {
+    candidates.push(candidates[0]);
+  }
+
+  return candidates;
 }
 
 function toIso(value: string | Date) {
