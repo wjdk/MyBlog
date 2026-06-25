@@ -16,7 +16,7 @@ import {
   requireAdmin,
   setAdminSession,
 } from "@/lib/auth";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -143,6 +143,23 @@ export async function uploadImageAction(formData: FormData) {
   }
 
   redirect(`/admin/media?url=${encodeURIComponent(blob.url)}`);
+}
+
+export async function deleteImageAction(pathname: string) {
+  await requireAdmin();
+
+  if (!pathname.startsWith("blog/")) {
+    redirect("/admin/media?error=delete-scope");
+  }
+
+  try {
+    await del(pathname);
+  } catch {
+    redirect("/admin/media?error=delete");
+  }
+
+  revalidatePath("/admin/media");
+  redirect("/admin/media?deleted=1");
 }
 
 function revalidateAll() {
