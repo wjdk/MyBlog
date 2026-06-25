@@ -11,6 +11,7 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(defaultValue);
   const [mode, setMode] = useState<"edit" | "preview" | "split">("split");
+  const [headingMenuOpen, setHeadingMenuOpen] = useState(false);
   const stats = useMemo(() => {
     const trimmed = value.trim();
 
@@ -133,28 +134,35 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
     <div className="mt-2 overflow-hidden rounded-2xl border border-stone-300 bg-white shadow-[0_1px_0_rgba(28,25,23,0.08)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-3 py-2">
         <div className="flex flex-wrap items-center gap-1">
-          <select
-            className="h-9 rounded-lg border border-stone-200 bg-white px-2 text-sm font-medium text-stone-700 outline-none transition hover:border-stone-300 focus:border-[#2f6f73]"
-            defaultValue=""
-            title="标题级别"
-            onChange={(event) => {
-              const level = Number(event.target.value);
-              if (level) {
-                setHeading(level);
-                event.target.value = "";
-              }
-            }}
-          >
-            <option value="" disabled>
-              标题
-            </option>
-            <option value="1">H1 一级标题</option>
-            <option value="2">H2 二级标题</option>
-            <option value="3">H3 三级标题</option>
-            <option value="4">H4 四级标题</option>
-            <option value="5">H5 五级标题</option>
-            <option value="6">H6 六级标题</option>
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              className="h-9 rounded-lg px-2.5 text-lg font-semibold text-stone-700 transition hover:bg-white hover:text-stone-950"
+              title="标题"
+              aria-haspopup="menu"
+              aria-expanded={headingMenuOpen}
+              onClick={() => setHeadingMenuOpen((open) => !open)}
+            >
+              H
+            </button>
+            {headingMenuOpen ? (
+              <div className="absolute left-0 top-10 z-20 w-36 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-[0_18px_45px_rgba(28,25,23,0.14)]">
+                {[1, 2, 3, 4, 5, 6].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100 hover:text-stone-950"
+                    onClick={() => {
+                      setHeading(level);
+                      setHeadingMenuOpen(false);
+                    }}
+                  >
+                    H{level} {levelText(level)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           <ToolButton label="B" title="加粗" onClick={() => wrapSelection("**", "**", "加粗文字")} />
           <ToolButton label="I" title="斜体" italic onClick={() => wrapSelection("*", "*", "斜体文字")} />
@@ -227,6 +235,12 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
       </div>
     </div>
   );
+}
+
+function levelText(level: number) {
+  return ["一级标题", "二级标题", "三级标题", "四级标题", "五级标题", "六级标题"][
+    level - 1
+  ];
 }
 
 function ToolButton({
