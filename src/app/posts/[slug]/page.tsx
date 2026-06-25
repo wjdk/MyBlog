@@ -1,6 +1,7 @@
 import { addCommentAction } from "@/app/actions";
 import { MarkdownView } from "@/components/markdown-view";
 import { SiteHeader } from "@/components/site-header";
+import { SubmitButton } from "@/components/submit-button";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getAdjacentPosts,
@@ -69,7 +70,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 href="/"
                 className="text-sm font-semibold text-[#2f6f73] transition hover:text-[#24575a]"
               >
-                ← 返回首页
+                返回首页
               </Link>
               <div className="mt-8 flex flex-wrap items-center gap-2 font-mono text-sm text-stone-500">
                 <span>{formatDate(post.createdAt)}</span>
@@ -150,9 +151,11 @@ export default async function PostPage({ params }: PostPageProps) {
                   className="w-full rounded-xl border border-stone-300 bg-white/80 px-3 py-2 outline-none transition focus:border-[#2f6f73]"
                   placeholder="写下你的想法"
                 />
-                <button className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#2f6f73] active:translate-y-0">
-                  发表评论
-                </button>
+                <SubmitButton
+                  label="发表评论"
+                  pendingLabel="发表中..."
+                  className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#2f6f73] active:translate-y-0 disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-stone-400"
+                />
               </form>
             ) : (
               <div className="mt-5 rounded-[1.25rem] border border-dashed border-stone-300 bg-white/65 p-5 text-stone-600">

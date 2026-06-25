@@ -28,10 +28,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <section className="mx-auto max-w-md px-5 py-16">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-[#2f6f73]">
-              {isRegister ? "创建评论账号" : "统一登录"}
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-stone-950">
+            <h1 className="text-3xl font-semibold text-stone-950">
               {isRegister ? "注册账号" : "登录"}
             </h1>
           </div>

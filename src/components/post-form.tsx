@@ -92,7 +92,7 @@ export function PostForm({
         </select>
       </label>
 
-      <SubmitButton label={submitLabel} />
+      <SubmitButton label={submitLabel} pendingLabel="保存中..." />
     </form>
   );
 }

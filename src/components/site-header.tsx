@@ -1,5 +1,6 @@
 import { logoutAction } from "@/app/actions";
 import { getCurrentUser } from "@/lib/auth";
+import { SubmitButton } from "@/components/submit-button";
 import Link from "next/link";
 
 export async function SiteHeader() {
@@ -55,9 +56,11 @@ export async function SiteHeader() {
                 {user.username}
               </span>
               <form action={logoutAction}>
-                <button className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950">
-                  退出
-                </button>
+                <SubmitButton
+                  label="退出"
+                  pendingLabel="退出中..."
+                  className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950 disabled:cursor-not-allowed disabled:text-stone-400"
+                />
               </form>
             </>
           ) : (

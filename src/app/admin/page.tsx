@@ -1,5 +1,6 @@
 import { deletePostAction } from "@/app/actions";
 import { SiteHeader } from "@/components/site-header";
+import { SubmitButton } from "@/components/submit-button";
 import { requireAdmin } from "@/lib/auth";
 import { listPosts } from "@/lib/posts";
 import Link from "next/link";
@@ -77,12 +78,7 @@ export default async function AdminPage() {
                     编辑
                   </Link>
                   <form action={deletePostAction.bind(null, post.id)}>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
-                    >
-                      删除
-                    </button>
+                    <SubmitButton label="删除" pendingLabel="删除中..." variant="danger" />
                   </form>
                 </div>
               </div>
