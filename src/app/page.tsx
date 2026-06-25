@@ -13,51 +13,68 @@ export default async function Home() {
   ]);
 
   return (
-    <main>
+    <main id="main-content">
       <SiteHeader />
-      <section className="border-b border-stone-200 bg-white">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <p className="text-sm font-semibold uppercase tracking-wider text-[#2f6f73]">
-            Chiyu&apos;s Blog
-          </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-stone-950 sm:text-5xl">
-            池鱼的个人博客。
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600">
-            支持文章、分类、标签、搜索、评论、点赞、浏览量、RSS、Sitemap 和后台管理。
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/admin/posts/new"
-              className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800"
-            >
-              写新文章
-            </Link>
-            <Link
-              href="/archive"
-              className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-900 hover:border-stone-400"
-            >
-              浏览归档
-            </Link>
+      <section className="border-b border-stone-900/10">
+        <div className="mx-auto grid max-w-6xl gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">
+          <div className="min-w-0 max-w-[20rem] sm:max-w-none">
+            <p className="text-sm font-semibold tracking-[0.28em] text-[#2f6f73]">
+              CHIYU JOURNAL
+            </p>
+            <h1 className="mt-5 max-w-[calc(100vw-2.5rem)] break-words font-serif text-3xl font-semibold leading-[1.12] text-stone-950 sm:text-5xl sm:text-balance lg:max-w-4xl lg:text-6xl">
+              <span className="block sm:inline">把项目、读书和</span>
+              <span className="block sm:inline">日常想法，</span>
+              <span className="block sm:inline">慢慢写成</span>
+              <span className="block sm:inline">可回看的线索。</span>
+            </h1>
+            <p className="mt-6 max-w-[20rem] text-base leading-8 text-stone-600 sm:max-w-full sm:text-lg sm:text-pretty lg:max-w-2xl">
+              这里收集文章、分类、标签、评论和搜索；也保留一些还在生长中的工程笔记。
+            </p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link
+                href="/admin/posts/new"
+                className="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(28,25,23,0.18)] transition hover:-translate-y-0.5 hover:bg-[#24575a] active:translate-y-0"
+              >
+                写新文章
+              </Link>
+              <Link
+                href="/archive"
+                className="rounded-full border border-stone-300/90 bg-white/65 px-5 py-3 text-sm font-semibold text-stone-900 transition hover:-translate-y-0.5 hover:border-[#2f6f73] hover:bg-white active:translate-y-0"
+              >
+                浏览归档
+              </Link>
+            </div>
+          </div>
+          <div className="w-full min-w-0 max-w-[20rem] overflow-hidden rounded-[1.5rem] bg-stone-950 p-6 text-white shadow-[0_24px_70px_rgba(28,25,23,0.25)] sm:max-w-full">
+            <p className="text-sm text-stone-300">当前内容</p>
+            <div className="mt-6 grid grid-cols-1 gap-3 text-center sm:grid-cols-3">
+              <Stat value={posts.length} label="文章" />
+              <Stat value={categories.length} label="分类" />
+              <Stat value={tags.length} label="标签" />
+            </div>
+            <p className="mt-6 border-t border-white/10 pt-5 text-sm leading-6 text-stone-300">
+              每一篇都按发布时间排列，适合顺着时间线慢慢翻，也可以按主题直接进入。
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[1fr_280px]">
+      <section className="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1fr_300px]">
         <div>
-          <div className="mb-6 flex items-end justify-between">
+          <div className="mb-7 flex items-end justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-stone-950">最新文章</h2>
-              <p className="mt-2 text-sm text-stone-600">只展示已发布内容。</p>
+              <h2 className="font-serif text-3xl font-semibold text-stone-950">最新文章</h2>
+              <p className="mt-2 text-sm text-stone-600">只展示已发布内容，按时间倒序排列。</p>
             </div>
           </div>
 
           {posts.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-stone-600">
-              还没有已发布文章。去后台创建第一篇吧。
+            <div className="rounded-[1.25rem] border border-dashed border-stone-300 bg-white/70 p-8 text-stone-600">
+              <p className="text-lg font-semibold text-stone-950">还没有已发布文章</p>
+              <p className="mt-2">去后台创建第一篇，首页会自动更新。</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               {posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
@@ -65,31 +82,31 @@ export default async function Home() {
           )}
         </div>
 
-        <aside className="space-y-6">
-          <div className="rounded-lg border border-stone-200 bg-white p-5">
+        <aside className="space-y-5 lg:pt-14">
+          <div className="rounded-[1.25rem] bg-[#fffdf8]/90 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]">
             <h2 className="font-semibold text-stone-950">分类</h2>
             <div className="mt-4 space-y-2">
               {categories.map((item) => (
                 <Link
                   key={item.category}
                   href={`/categories/${encodeURIComponent(item.category)}`}
-                  className="flex justify-between rounded-md px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 hover:text-stone-950"
+                  className="flex justify-between rounded-lg px-3 py-2 text-sm text-stone-600 transition hover:bg-stone-100 hover:text-stone-950"
                 >
                   <span>{item.category}</span>
-                  <span>{item.count}</span>
+                  <span className="font-mono tabular-nums">{item.count}</span>
                 </Link>
               ))}
             </div>
           </div>
 
-          <div className="rounded-lg border border-stone-200 bg-white p-5">
+          <div className="rounded-[1.25rem] bg-[#fffdf8]/90 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]">
             <h2 className="font-semibold text-stone-950">标签</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {tags.map((item) => (
                 <Link
                   key={item.tag}
                   href={`/tags/${encodeURIComponent(item.tag)}`}
-                  className="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-600 hover:bg-[#2f6f73] hover:text-white"
+                  className="rounded-md bg-stone-100 px-3 py-1.5 text-sm text-stone-600 transition hover:-translate-y-0.5 hover:bg-[#2f6f73] hover:text-white"
                 >
                   #{item.tag}
                 </Link>
@@ -99,5 +116,14 @@ export default async function Home() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="min-w-0 rounded-2xl bg-white/8 p-3">
+      <div className="font-mono text-2xl font-semibold tabular-nums">{value}</div>
+      <div className="mt-1 text-xs text-stone-300">{label}</div>
+    </div>
   );
 }

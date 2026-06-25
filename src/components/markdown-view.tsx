@@ -8,7 +8,7 @@ export function MarkdownView({ content }: { content: string }) {
   function flushList() {
     if (listItems.length) {
       blocks.push(
-        <ul key={`list-${blocks.length}`} className="list-disc space-y-2 pl-6">
+        <ul key={`list-${blocks.length}`} className="list-disc space-y-2 pl-6 marker:text-[#2f6f73]">
           {listItems.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -23,7 +23,7 @@ export function MarkdownView({ content }: { content: string }) {
       blocks.push(
         <pre
           key={`code-${blocks.length}`}
-          className="overflow-x-auto rounded-lg bg-stone-950 p-4 text-sm leading-7 text-stone-100"
+          className="overflow-x-auto rounded-2xl bg-stone-950 p-5 text-sm leading-7 text-stone-100 shadow-[0_18px_45px_rgba(28,25,23,0.18)]"
         >
           <code>{codeLines.join("\n")}</code>
         </pre>,
@@ -56,7 +56,7 @@ export function MarkdownView({ content }: { content: string }) {
     if (line.startsWith("### ")) {
       flushList();
       blocks.push(
-        <h3 key={`h3-${blocks.length}`} className="text-2xl font-semibold text-stone-950">
+        <h3 key={`h3-${blocks.length}`} className="pt-2 text-2xl font-semibold text-stone-950 text-balance">
           {line.slice(4)}
         </h3>,
       );
@@ -66,7 +66,7 @@ export function MarkdownView({ content }: { content: string }) {
     if (line.startsWith("## ")) {
       flushList();
       blocks.push(
-        <h2 key={`h2-${blocks.length}`} className="text-3xl font-semibold text-stone-950">
+        <h2 key={`h2-${blocks.length}`} className="pt-4 font-serif text-3xl font-semibold text-stone-950 text-balance">
           {line.slice(3)}
         </h2>,
       );
@@ -78,7 +78,7 @@ export function MarkdownView({ content }: { content: string }) {
       blocks.push(
         <blockquote
           key={`quote-${blocks.length}`}
-          className="border-l-4 border-[#2f6f73] bg-white px-4 py-3 text-stone-700"
+          className="rounded-r-2xl border-l-4 border-[#2f6f73] bg-white/80 px-5 py-4 text-stone-700"
         >
           {line.slice(2)}
         </blockquote>,
@@ -93,7 +93,7 @@ export function MarkdownView({ content }: { content: string }) {
 
     flushList();
     blocks.push(
-      <p key={`p-${blocks.length}`} className="leading-9">
+      <p key={`p-${blocks.length}`} className="leading-9 text-pretty">
         {line}
       </p>,
     );
@@ -102,5 +102,5 @@ export function MarkdownView({ content }: { content: string }) {
   flushList();
   flushCode();
 
-  return <div className="space-y-6 text-lg text-stone-800">{blocks}</div>;
+  return <div className="space-y-7 text-lg text-stone-800">{blocks}</div>;
 }

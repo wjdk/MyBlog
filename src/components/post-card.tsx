@@ -5,36 +5,40 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className="overflow-hidden rounded-lg border border-stone-200 bg-white transition hover:-translate-y-0.5 hover:border-[#2f6f73] hover:shadow-sm"
+      className="group block overflow-hidden rounded-[1.25rem] bg-[#fffdf8] shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_0_rgba(47,111,115,0.28),0_24px_60px_rgba(47,111,115,0.14)] active:translate-y-0"
     >
       {post.coverImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={post.coverImage}
-          alt=""
-          className="h-44 w-full object-cover"
+          alt={post.title}
+          className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
         />
-      ) : null}
-      <div className="p-6">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+      ) : (
+        <div className="h-3 bg-[linear-gradient(90deg,#2f6f73,#8b735b,#d8c8ac)]" />
+      )}
+      <article className="p-6">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-stone-500">
           <span>{formatDate(post.createdAt)}</span>
           <span>·</span>
           <span>{post.category}</span>
           <span>·</span>
           <span>{post.views} 阅读</span>
         </div>
-        <h3 className="mt-3 text-xl font-semibold text-stone-950">{post.title}</h3>
+        <h3 className="mt-4 text-2xl font-semibold leading-snug text-stone-950 text-balance transition group-hover:text-[#24575a]">
+          {post.title}
+        </h3>
         <p className="mt-3 line-clamp-3 leading-7 text-stone-600">{post.excerpt}</p>
         {post.tags.length > 0 ? (
           <div className="mt-4 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-stone-100 px-2 py-1 text-xs text-stone-600">
+              <span key={tag} className="rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-600">
                 #{tag}
               </span>
             ))}
           </div>
         ) : null}
-      </div>
+      </article>
     </Link>
   );
 }
