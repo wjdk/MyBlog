@@ -13,12 +13,12 @@ export default async function CommentsAdminPage() {
   return (
     <main>
       <SiteHeader />
-      <section className="mx-auto max-w-5xl px-5 py-10">
+      <section className="mx-auto max-w-6xl px-5 py-10">
         <Link href="/admin" className="text-sm font-medium text-[#2f6f73] hover:underline">
           返回后台
         </Link>
         <h1 className="mt-6 text-3xl font-semibold text-stone-950">评论管理</h1>
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 max-w-4xl space-y-4">
           {await Promise.all(comments.map(async (comment) => {
             const post = await getPostById(comment.postId);
             return (

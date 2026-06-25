@@ -61,7 +61,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <SiteHeader />
       <article>
         <section className="border-b border-stone-900/10">
-          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[1fr_360px] lg:items-end lg:py-16">
+          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-16">
             <div>
               <Link
                 href="/"
@@ -123,8 +123,8 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         </section>
 
-        <div className="mx-auto max-w-3xl px-5 py-12">
-          <div className="rounded-[1.5rem] bg-[#fffdf8]/72 px-5 py-7 shadow-[0_1px_0_rgba(28,25,23,0.08),0_24px_70px_rgba(47,48,43,0.06)] sm:px-8">
+        <div className="mx-auto max-w-6xl px-5 py-12">
+          <div className="max-w-4xl rounded-[1.5rem] bg-[#fffdf8]/72 px-5 py-7 shadow-[0_1px_0_rgba(28,25,23,0.08),0_24px_70px_rgba(47,48,43,0.06)] sm:px-8 lg:px-10">
             <MarkdownView content={post.content} />
           </div>
 
@@ -134,13 +134,13 @@ export default async function PostPage({ params }: PostPageProps) {
             </button>
           </form>
 
-          <nav className="mt-10 grid gap-4 border-y border-stone-900/10 py-6 sm:grid-cols-2">
+          <nav className="mt-10 grid max-w-4xl gap-4 border-y border-stone-900/10 py-6 sm:grid-cols-2">
             <AdjacentLink label="上一篇" post={adjacent.previous} />
             <AdjacentLink label="下一篇" post={adjacent.next} alignRight />
           </nav>
 
           {related.length ? (
-            <section className="mt-10">
+            <section className="mt-10 max-w-4xl">
               <h2 className="font-serif text-3xl font-semibold text-stone-950">相关文章</h2>
               <div className="mt-5 space-y-3">
                 {related.map((item) => (
@@ -159,7 +159,7 @@ export default async function PostPage({ params }: PostPageProps) {
             </section>
           ) : null}
 
-          <section id="comments" className="mt-12">
+          <section id="comments" className="mt-12 max-w-4xl">
             <h2 className="font-serif text-3xl font-semibold text-stone-950">评论</h2>
             <form
               action={addCommentAction.bind(null, post.id, post.slug)}

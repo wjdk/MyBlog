@@ -11,7 +11,7 @@ export default async function NewPostPage() {
   return (
     <main>
       <SiteHeader />
-      <section className="mx-auto max-w-3xl px-5 py-10">
+      <section className="mx-auto max-w-6xl px-5 py-10">
         <Link href="/admin" className="text-sm font-medium text-[#2f6f73] hover:underline">
           返回后台
         </Link>
