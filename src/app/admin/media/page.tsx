@@ -31,28 +31,15 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           返回后台
         </Link>
 
-        <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold text-stone-950">图片管理</h1>
-            <p className="mt-2 text-stone-600">
-              上传和管理保存在 Vercel Blob 的博客图片。
-            </p>
-          </div>
-          <p className="rounded-md bg-stone-100 px-3 py-2 font-mono text-xs text-stone-600">
-            blog/
-          </p>
+        <div className="mt-6">
+          <h1 className="text-3xl font-semibold text-stone-950">图片管理</h1>
         </div>
 
         <form
           action={uploadImageAction}
           className="mt-8 space-y-4 rounded-lg border border-stone-200 bg-white p-6"
         >
-          <div>
-            <h2 className="text-lg font-semibold text-stone-950">上传图片</h2>
-            <p className="mt-1 text-sm text-stone-600">
-              上传成功后，图片会出现在下方列表中。
-            </p>
-          </div>
+          <h2 className="text-lg font-semibold text-stone-950">上传图片</h2>
 
           {errorMessage ? <p className="text-sm text-red-700">{errorMessage}</p> : null}
           {deleted ? <p className="text-sm text-[#2f6f73]">图片已删除。</p> : null}
@@ -77,18 +64,13 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
 
         <section className="mt-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-stone-950">已上传图片</h2>
-              <p className="mt-1 text-sm text-stone-600">
-                当前显示 Blob Store 中 `blog/` 前缀下的图片。
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-stone-950">已上传图片</h2>
             <p className="text-sm text-stone-500">{media.blobs.length} 张图片</p>
           </div>
 
           {media.failed ? (
             <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              图片列表加载失败，请检查 Vercel Blob 是否已连接到当前项目。
+              图片列表加载失败，请稍后重试。
             </p>
           ) : null}
 
@@ -183,7 +165,7 @@ async function getBlogImages(): Promise<MediaListState> {
 
 function getErrorMessage(error?: string) {
   if (error === "upload") {
-    return "上传失败，请检查 Vercel Blob 连接、图片大小或稍后重试。";
+    return "上传失败，请检查图片大小或稍后重试。";
   }
 
   if (error === "delete") {
@@ -191,7 +173,7 @@ function getErrorMessage(error?: string) {
   }
 
   if (error === "delete-scope") {
-    return "只能删除 blog/ 前缀下的博客图片。";
+    return "只能删除图片管理里的图片。";
   }
 
   if (error) {
