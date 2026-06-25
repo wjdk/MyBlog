@@ -18,10 +18,10 @@ export default async function Home() {
       <section className="border-b border-stone-200 bg-white">
         <div className="mx-auto max-w-6xl px-5 py-16">
           <p className="text-sm font-semibold uppercase tracking-wider text-[#2f6f73]">
-            Personal Dynamic Blog
+            Chiyu's Blog
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-stone-950 sm:text-5xl">
-            记录想法、项目和长期积累的个人博客。
+            池鱼的个人博客。
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600">
             支持文章、分类、标签、搜索、评论、点赞、浏览量、RSS、Sitemap 和后台管理。

@@ -47,9 +47,16 @@ async function createSchema() {
       cover_image TEXT NOT NULL DEFAULT '',
       views INTEGER NOT NULL DEFAULT 0,
       likes INTEGER NOT NULL DEFAULT 0,
+      submission_key TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `;
+
+  await sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS submission_key TEXT`;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS posts_submission_key_idx
+    ON posts (submission_key)
   `;
 
   await sql`

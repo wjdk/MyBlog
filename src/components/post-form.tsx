@@ -1,14 +1,25 @@
 import type { Post } from "@/lib/posts";
+import { SubmitButton } from "@/components/submit-button";
 
 type PostFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   post?: Post;
   submitLabel: string;
+  submissionKey?: string;
 };
 
-export function PostForm({ action, post, submitLabel }: PostFormProps) {
+export function PostForm({
+  action,
+  post,
+  submitLabel,
+  submissionKey,
+}: PostFormProps) {
   return (
     <form action={action} className="space-y-5">
+      {submissionKey ? (
+        <input type="hidden" name="submissionKey" value={submissionKey} />
+      ) : null}
+
       <div className="grid gap-5 md:grid-cols-2">
         <label className="block md:col-span-2">
           <span className="text-sm font-medium text-stone-700">标题</span>
@@ -98,12 +109,7 @@ export function PostForm({ action, post, submitLabel }: PostFormProps) {
         </select>
       </label>
 
-      <button
-        type="submit"
-        className="rounded-md bg-[#2f6f73] px-4 py-2 text-sm font-semibold text-white hover:bg-[#25595c]"
-      >
-        {submitLabel}
-      </button>
+      <SubmitButton label={submitLabel} />
     </form>
   );
 }

@@ -61,6 +61,7 @@ export type PostInput = {
   category: string;
   tags: string[];
   coverImage: string;
+  submissionKey?: string;
 };
 
 export type PostFilters = {
@@ -173,18 +174,34 @@ export async function createPost(input: PostInput) {
   await ensureSchema();
   const sql = getSql();
   const slug = await uniqueSlug(input.slug || input.title);
-  const rows = await sql`
-    INSERT INTO posts (
-      title, slug, excerpt, content, status, category, tags, cover_image,
-      views, likes, created_at, updated_at
-    )
-    VALUES (
-      ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
-      ${input.status}, ${input.category}, ${input.tags.join(",")},
-      ${input.coverImage}, 0, 0, NOW(), NOW()
-    )
-    RETURNING *
-  `;
+  const submissionKey = input.submissionKey || null;
+  const rows = submissionKey
+    ? await sql`
+        INSERT INTO posts (
+          title, slug, excerpt, content, status, category, tags, cover_image,
+          views, likes, submission_key, created_at, updated_at
+        )
+        VALUES (
+          ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
+          ${input.status}, ${input.category}, ${input.tags.join(",")},
+          ${input.coverImage}, 0, 0, ${submissionKey}, NOW(), NOW()
+        )
+        ON CONFLICT (submission_key) DO UPDATE
+        SET submission_key = EXCLUDED.submission_key
+        RETURNING *
+      `
+    : await sql`
+        INSERT INTO posts (
+          title, slug, excerpt, content, status, category, tags, cover_image,
+          views, likes, created_at, updated_at
+        )
+        VALUES (
+          ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
+          ${input.status}, ${input.category}, ${input.tags.join(",")},
+          ${input.coverImage}, 0, 0, NOW(), NOW()
+        )
+        RETURNING *
+      `;
 
   return mapPost(rows[0] as PostRow);
 }

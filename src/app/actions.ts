@@ -29,6 +29,7 @@ function readPostForm(formData: FormData): PostInput {
   const coverImage = String(formData.get("coverImage") || "").trim();
   const tags = splitTags(String(formData.get("tags") || ""));
   const status = formData.get("status") === "published" ? "published" : "draft";
+  const submissionKey = String(formData.get("submissionKey") || "").trim();
 
   if (!title || !excerpt || !content) {
     throw new Error("标题、摘要和正文都不能为空。");
@@ -43,6 +44,7 @@ function readPostForm(formData: FormData): PostInput {
     category: category || "随笔",
     tags,
     coverImage,
+    submissionKey: submissionKey || undefined,
   };
 }
 
@@ -91,7 +93,11 @@ export async function deletePostAction(id: number) {
   redirect("/admin");
 }
 
-export async function addCommentAction(postId: number, slug: string, formData: FormData) {
+export async function addCommentAction(
+  postId: number,
+  slug: string,
+  formData: FormData,
+) {
   const author = String(formData.get("author") || "").trim();
   const content = String(formData.get("content") || "").trim();
 
