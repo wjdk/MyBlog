@@ -1,4 +1,5 @@
 import type { Post } from "@/lib/posts";
+import { MarkdownEditor } from "@/components/markdown-editor";
 import { SubmitButton } from "@/components/submit-button";
 
 type PostFormProps = {
@@ -80,21 +81,14 @@ export function PostForm({
           defaultValue={post?.excerpt}
           rows={3}
           className="mt-2 w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-950 outline-none focus:border-[#2f6f73]"
-          placeholder="可选。不填会自动从正文生成"
+          placeholder="可选。留空则不显示摘要"
         />
       </label>
 
-      <label className="block">
+      <div className="block">
         <span className="text-sm font-medium text-stone-700">正文 Markdown</span>
-        <textarea
-          required
-          name="content"
-          defaultValue={post?.content}
-          rows={16}
-          className="mt-2 w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 font-mono text-sm leading-7 text-stone-950 outline-none focus:border-[#2f6f73]"
-          placeholder="支持标题、列表、引用、代码块和普通段落"
-        />
-      </label>
+        <MarkdownEditor defaultValue={post?.content} />
+      </div>
 
       <label className="block">
         <span className="text-sm font-medium text-stone-700">状态</span>
