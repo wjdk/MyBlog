@@ -13,7 +13,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
   const { url, error } = await searchParams;
   const errorMessage =
     error === "config"
-      ? "Blob 存储未配置，请检查 Vercel 环境变量 BLOB_READ_WRITE_TOKEN。"
+      ? "Blob 存储未配置，请检查 Vercel Blob 是否已连接到当前项目。"
       : error === "upload"
         ? "上传失败，请稍后重试或换一张更小的图片。"
         : error

@@ -131,10 +131,6 @@ export async function uploadImageAction(formData: FormData) {
     redirect("/admin/media?error=1");
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    redirect("/admin/media?error=config");
-  }
-
   const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
   let blob: Awaited<ReturnType<typeof put>>;
 
