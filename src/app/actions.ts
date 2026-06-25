@@ -23,8 +23,8 @@ import { redirect } from "next/navigation";
 
 function readPostForm(formData: FormData): PostInput {
   const title = String(formData.get("title") || "").trim();
-  const excerpt = String(formData.get("excerpt") || "").trim();
   const content = String(formData.get("content") || "").trim();
+  const excerpt = String(formData.get("excerpt") || "").trim() || makeExcerpt(content);
   const slug = String(formData.get("slug") || "").trim();
   const category = String(formData.get("category") || "随笔").trim();
   const coverImage = String(formData.get("coverImage") || "").trim();
@@ -32,8 +32,8 @@ function readPostForm(formData: FormData): PostInput {
   const status = formData.get("status") === "published" ? "published" : "draft";
   const submissionKey = String(formData.get("submissionKey") || "").trim();
 
-  if (!title || !excerpt || !content) {
-    throw new Error("标题、摘要和正文都不能为空。");
+  if (!title || !content) {
+    throw new Error("标题和正文都不能为空。");
   }
 
   return {
@@ -76,6 +76,19 @@ export async function createPostAction(formData: FormData) {
   }
 
   redirect("/admin");
+}
+
+function makeExcerpt(content: string) {
+  return (
+    content
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^>\s+/gm, "")
+      .replace(/^[-*]\s+/gm, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 140) || "暂无摘要"
+  );
 }
 
 export async function updatePostAction(id: number, formData: FormData) {

@@ -76,12 +76,11 @@ export function PostForm({
       <label className="block">
         <span className="text-sm font-medium text-stone-700">摘要</span>
         <textarea
-          required
           name="excerpt"
           defaultValue={post?.excerpt}
           rows={3}
           className="mt-2 w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-950 outline-none focus:border-[#2f6f73]"
-          placeholder="首页展示的一小段简介"
+          placeholder="可选。不填会自动从正文生成"
         />
       </label>
 
