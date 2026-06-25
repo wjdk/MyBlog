@@ -24,7 +24,7 @@ import { redirect } from "next/navigation";
 function readPostForm(formData: FormData): PostInput {
   const title = String(formData.get("title") || "").trim();
   const content = String(formData.get("content") || "").trim();
-  const excerpt = String(formData.get("excerpt") || "").trim() || makeExcerpt(content);
+  const excerpt = String(formData.get("excerpt") || "").trim();
   const slug = String(formData.get("slug") || "").trim();
   const category = String(formData.get("category") || "随笔").trim();
   const coverImage = String(formData.get("coverImage") || "").trim();
@@ -76,19 +76,6 @@ export async function createPostAction(formData: FormData) {
   }
 
   redirect("/admin");
-}
-
-function makeExcerpt(content: string) {
-  return (
-    content
-      .replace(/```[\s\S]*?```/g, " ")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^>\s+/gm, "")
-      .replace(/^[-*]\s+/gm, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 140) || "暂无摘要"
-  );
 }
 
 export async function updatePostAction(id: number, formData: FormData) {

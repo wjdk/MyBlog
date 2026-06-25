@@ -31,10 +31,10 @@ export async function generateMetadata({
 
   return {
     title: `${post.title} | 我的博客`,
-    description: post.excerpt,
+    description: post.excerpt || undefined,
     openGraph: {
       title: post.title,
-      description: post.excerpt,
+      description: post.excerpt || undefined,
       images: post.coverImage ? [post.coverImage] : undefined,
       type: "article",
     },
@@ -86,9 +86,11 @@ export default async function PostPage({ params }: PostPageProps) {
               <h1 className="mt-5 max-w-4xl break-words font-serif text-4xl font-semibold leading-[1.08] text-stone-950 text-balance sm:text-5xl lg:text-6xl">
                 {post.title}
               </h1>
-              <p className="mt-6 max-w-2xl text-xl leading-9 text-stone-600 text-pretty">
-                {post.excerpt}
-              </p>
+              {post.excerpt ? (
+                <p className="mt-6 max-w-2xl text-xl leading-9 text-stone-600 text-pretty">
+                  {post.excerpt}
+                </p>
+              ) : null}
               {post.tags.length ? (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
@@ -148,7 +150,9 @@ export default async function PostPage({ params }: PostPageProps) {
                     className="block rounded-2xl bg-[#fffdf8]/85 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(47,111,115,0.1)]"
                   >
                     <p className="font-semibold text-stone-950">{item.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-stone-600">{item.excerpt}</p>
+                    {item.excerpt ? (
+                      <p className="mt-1 text-sm leading-6 text-stone-600">{item.excerpt}</p>
+                    ) : null}
                   </Link>
                 ))}
               </div>

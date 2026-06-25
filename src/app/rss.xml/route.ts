@@ -12,7 +12,7 @@ export async function GET() {
           <title><![CDATA[${post.title}]]></title>
           <link>${siteUrl}${postPath(post.slug)}</link>
           <guid>${siteUrl}${postPath(post.slug)}</guid>
-          <description><![CDATA[${post.excerpt}]]></description>
+          ${post.excerpt ? `<description><![CDATA[${post.excerpt}]]></description>` : ""}
           <pubDate>${new Date(post.createdAt).toUTCString()}</pubDate>
         </item>`,
     )

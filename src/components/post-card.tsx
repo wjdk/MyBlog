@@ -28,7 +28,9 @@ export function PostCard({ post }: { post: Post }) {
         <h3 className="mt-4 text-2xl font-semibold leading-snug text-stone-950 text-balance transition group-hover:text-[#24575a]">
           {post.title}
         </h3>
-        <p className="mt-3 line-clamp-3 leading-7 text-stone-600">{post.excerpt}</p>
+        {post.excerpt ? (
+          <p className="mt-3 line-clamp-3 leading-7 text-stone-600">{post.excerpt}</p>
+        ) : null}
         {post.tags.length > 0 ? (
           <div className="mt-4 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
