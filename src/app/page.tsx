@@ -21,14 +21,8 @@ export default async function Home() {
             <p className="text-sm font-semibold tracking-[0.28em] text-[#2f6f73]">
               CHIYU JOURNAL
             </p>
-            <h1 className="mt-5 max-w-[calc(100vw-2.5rem)] break-words font-serif text-3xl font-semibold leading-[1.12] text-stone-950 sm:text-5xl sm:text-balance lg:max-w-4xl lg:text-6xl">
-              <span className="block sm:inline">把项目、读书和</span>
-              <span className="block sm:inline">日常想法，</span>
-              <span className="block sm:inline">慢慢写成</span>
-              <span className="block sm:inline">可回看的线索。</span>
-            </h1>
             <p className="mt-6 max-w-[20rem] text-base leading-8 text-stone-600 sm:max-w-full sm:text-lg sm:text-pretty lg:max-w-2xl">
-              这里收集文章、分类、标签、评论和搜索；也保留一些还在生长中的工程笔记。
+              收录项目开发笔记，学习笔记，生活日常和绘画记录。
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
@@ -52,9 +46,6 @@ export default async function Home() {
               <Stat value={categories.length} label="分类" />
               <Stat value={tags.length} label="标签" />
             </div>
-            <p className="mt-6 border-t border-white/10 pt-5 text-sm leading-6 text-stone-300">
-              每一篇都按发布时间排列，适合顺着时间线慢慢翻，也可以按主题直接进入。
-            </p>
           </div>
         </div>
       </section>
@@ -64,7 +55,6 @@ export default async function Home() {
           <div className="mb-7 flex items-end justify-between">
             <div>
               <h2 className="font-serif text-3xl font-semibold text-stone-950">最新文章</h2>
-              <p className="mt-2 text-sm text-stone-600">只展示已发布内容，按时间倒序排列。</p>
             </div>
           </div>
 
