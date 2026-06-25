@@ -46,7 +46,51 @@ export function MarkdownView({ content }: { content: string }) {
     }
   }
 
-  for (const line of lines) {
+  function pushTable(startIndex: number) {
+    const rows: string[][] = [];
+    let currentIndex = startIndex;
+
+    while (currentIndex < lines.length && isTableRow(lines[currentIndex])) {
+      rows.push(parseTableRow(lines[currentIndex]));
+      currentIndex += 1;
+    }
+
+    if (rows.length < 2 || !isDividerRow(rows[1])) {
+      return startIndex;
+    }
+
+    blocks.push(
+      <div key={`table-${blocks.length}`} className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
+        <table className="w-full border-collapse text-left text-base">
+          <thead className="bg-stone-100 text-stone-950">
+            <tr>
+              {rows[0].map((cell, index) => (
+                <th key={`${cell}-${index}`} className="border-b border-stone-200 px-4 py-3 font-semibold">
+                  {renderInline(cell, `th-${blocks.length}-${index}`)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.slice(2).map((row, rowIndex) => (
+              <tr key={`row-${rowIndex}`} className="border-b border-stone-100 last:border-0">
+                {row.map((cell, cellIndex) => (
+                  <td key={`${cell}-${cellIndex}`} className="px-4 py-3 text-stone-700">
+                    {renderInline(cell, `td-${blocks.length}-${rowIndex}-${cellIndex}`)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>,
+    );
+
+    return currentIndex;
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (line.trim().startsWith("```")) {
       if (inCode) {
         flushCode();
@@ -67,12 +111,39 @@ export function MarkdownView({ content }: { content: string }) {
       continue;
     }
 
+    if (isTableRow(line) && index + 1 < lines.length && isTableRow(lines[index + 1])) {
+      flushList();
+      const nextIndex = pushTable(index);
+      if (nextIndex !== index) {
+        index = nextIndex - 1;
+        continue;
+      }
+    }
+
     if (line.startsWith("# ")) {
       flushList();
       blocks.push(
         <h1 key={`h1-${blocks.length}`} className="pt-4 font-serif text-4xl font-semibold text-stone-950 text-balance">
           {renderInline(line.slice(2), `h1-${blocks.length}`)}
         </h1>,
+      );
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{4,6})\s+(.+)$/);
+    if (headingMatch) {
+      flushList();
+      const level = headingMatch[1].length;
+      const className =
+        level === 4
+          ? "pt-2 text-xl font-semibold text-stone-950 text-balance"
+          : "pt-1 text-lg font-semibold text-stone-950 text-balance";
+      const Heading = `h${level}` as "h4" | "h5" | "h6";
+
+      blocks.push(
+        <Heading key={`h${level}-${blocks.length}`} className={className}>
+          {renderInline(headingMatch[2], `h${level}-${blocks.length}`)}
+        </Heading>,
       );
       continue;
     }
@@ -219,4 +290,21 @@ function safeUrl(url: string) {
 
 function isExternalUrl(url: string) {
   return /^https?:\/\//.test(url);
+}
+
+function isTableRow(line: string) {
+  return /^\s*\|.+\|\s*$/.test(line);
+}
+
+function parseTableRow(line: string) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isDividerRow(row: string[]) {
+  return row.every((cell) => /^:?-{3,}:?$/.test(cell));
 }

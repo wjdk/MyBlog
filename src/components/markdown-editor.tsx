@@ -7,16 +7,6 @@ type MarkdownEditorProps = {
   defaultValue?: string;
 };
 
-const tools = [
-  { label: "H2", before: "## ", after: "", fallback: "小标题" },
-  { label: "B", before: "**", after: "**", fallback: "加粗文字" },
-  { label: "I", before: "*", after: "*", fallback: "斜体文字" },
-  { label: "Link", before: "[", after: "](https://example.com)", fallback: "链接文字" },
-  { label: "Quote", before: "> ", after: "", fallback: "引用内容" },
-  { label: "List", before: "- ", after: "", fallback: "列表项" },
-  { label: "Code", before: "```\n", after: "\n```", fallback: "code" },
-];
-
 export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(defaultValue);
@@ -31,7 +21,23 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
     };
   }, [value]);
 
-  function insert(before: string, after: string, fallback: string) {
+  function updateText(next: string, cursor?: number) {
+    setValue(next);
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      if (typeof cursor === "number") {
+        textarea.setSelectionRange(cursor, cursor);
+      }
+    });
+  }
+
+  function wrapSelection(before: string, after: string, fallback: string) {
     const textarea = textareaRef.current;
 
     if (!textarea) {
@@ -44,28 +50,130 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
     const next = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`;
     const cursor = start + before.length + selected.length + after.length;
 
-    setValue(next);
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
+    updateText(next, cursor);
+  }
+
+  function prefixLines(prefix: string, fallback: string) {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = value.slice(start, end) || fallback;
+    const nextSelected = selected
+      .split("\n")
+      .map((line) => (line ? `${prefix}${line}` : prefix.trimEnd()))
+      .join("\n");
+    const next = `${value.slice(0, start)}${nextSelected}${value.slice(end)}`;
+
+    updateText(next, start + nextSelected.length);
+  }
+
+  function setHeading(level: number) {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = value.slice(start, end) || "标题";
+    const marker = `${"#".repeat(level)} `;
+    const nextSelected = selected
+      .split("\n")
+      .map((line) => `${marker}${line.replace(/^#{1,6}\s+/, "")}`)
+      .join("\n");
+    const next = `${value.slice(0, start)}${nextSelected}${value.slice(end)}`;
+
+    updateText(next, start + nextSelected.length);
+  }
+
+  function insertBlock(markdown: string) {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const before = value.slice(0, start);
+    const after = value.slice(textarea.selectionEnd);
+    const needsLeadingBreak = before && !before.endsWith("\n") ? "\n\n" : "";
+    const needsTrailingBreak = after && !after.startsWith("\n") ? "\n\n" : "";
+    const block = `${needsLeadingBreak}${markdown}${needsTrailingBreak}`;
+    const next = `${before}${block}${after}`;
+
+    updateText(next, start + block.length);
+  }
+
+  function formatMarkdown() {
+    const next = value
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((line) =>
+        line
+          .replace(/[ \t]+$/g, "")
+          .replace(/^(#{1,6})([^#\s])/g, "$1 $2")
+          .replace(/^([-*])([^\s])/g, "$1 $2")
+          .replace(/^(\d+\.)([^\s])/g, "$1 $2")
+          .replace(/^(>)([^\s])/g, "$1 $2"),
+      )
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    updateText(next ? `${next}\n` : "");
   }
 
   return (
     <div className="mt-2 overflow-hidden rounded-2xl border border-stone-300 bg-white shadow-[0_1px_0_rgba(28,25,23,0.08)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-3 py-2">
-        <div className="flex flex-wrap gap-1">
-          {tools.map((tool) => (
-            <button
-              key={tool.label}
-              type="button"
-              className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-stone-700 transition hover:bg-white hover:text-stone-950"
-              onClick={() => insert(tool.before, tool.after, tool.fallback)}
-              title={tool.label}
-            >
-              {tool.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1">
+          <select
+            className="h-9 rounded-lg border border-stone-200 bg-white px-2 text-sm font-medium text-stone-700 outline-none transition hover:border-stone-300 focus:border-[#2f6f73]"
+            defaultValue=""
+            title="标题级别"
+            onChange={(event) => {
+              const level = Number(event.target.value);
+              if (level) {
+                setHeading(level);
+                event.target.value = "";
+              }
+            }}
+          >
+            <option value="" disabled>
+              标题
+            </option>
+            <option value="1">H1 一级标题</option>
+            <option value="2">H2 二级标题</option>
+            <option value="3">H3 三级标题</option>
+            <option value="4">H4 四级标题</option>
+            <option value="5">H5 五级标题</option>
+            <option value="6">H6 六级标题</option>
+          </select>
+
+          <ToolButton label="B" title="加粗" onClick={() => wrapSelection("**", "**", "加粗文字")} />
+          <ToolButton label="I" title="斜体" italic onClick={() => wrapSelection("*", "*", "斜体文字")} />
+          <ToolButton label="🔗" title="链接" onClick={() => wrapSelection("[", "](https://example.com)", "链接文字")} />
+          <ToolButton
+            label="表"
+            title="表格"
+            onClick={() =>
+              insertBlock("| 标题 | 说明 |\n| --- | --- |\n| 内容 | 内容 |")
+            }
+          />
+          <ToolButton label="❝" title="引用" onClick={() => prefixLines("> ", "引用内容")} />
+          <ToolButton
+            label="图"
+            title="图片"
+            onClick={() => wrapSelection("![", "](https://example.com/image.jpg)", "图片说明")}
+          />
+          <ToolButton label="</>" title="代码块" onClick={() => wrapSelection("```\n", "\n```", "code")} />
+          <ToolButton label="格式化" title="格式化 Markdown" onClick={formatMarkdown} />
         </div>
 
         <div className="flex rounded-full bg-white p-1 text-xs font-medium text-stone-600">
@@ -93,7 +201,7 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
             value={value}
             rows={18}
             className="min-h-[28rem] w-full resize-y border-0 bg-white px-4 py-4 font-mono text-sm leading-7 text-stone-950 outline-none"
-            placeholder="支持标题、列表、引用、代码块、图片和 [文字](链接)"
+            placeholder="支持多级标题、表格、引用、代码块、图片和 [文字](链接)"
             onChange={(event) => setValue(event.target.value)}
           />
         ) : null}
@@ -118,5 +226,30 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
         </span>
       </div>
     </div>
+  );
+}
+
+function ToolButton({
+  label,
+  title,
+  italic,
+  onClick,
+}: {
+  label: string;
+  title: string;
+  italic?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`h-9 rounded-lg px-2.5 text-sm font-semibold text-stone-700 transition hover:bg-white hover:text-stone-950 ${
+        italic ? "italic" : ""
+      }`}
+      title={title}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
