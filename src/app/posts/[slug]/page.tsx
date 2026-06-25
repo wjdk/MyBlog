@@ -61,7 +61,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <SiteHeader />
       <article>
         <section className="border-b border-stone-900/10">
-          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-16">
+          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 lg:items-end lg:py-16">
             <div>
               <Link
                 href="/"
@@ -105,21 +105,6 @@ export default async function PostPage({ params }: PostPageProps) {
                 </div>
               ) : null}
             </div>
-            {post.coverImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={post.coverImage}
-                alt={post.title}
-                className="aspect-[4/5] w-full rounded-[1.5rem] object-cover shadow-[0_24px_70px_rgba(28,25,23,0.2)]"
-              />
-            ) : (
-              <div className="hidden min-h-72 rounded-[1.5rem] bg-[linear-gradient(135deg,#2f6f73,#8b735b_55%,#d8c8ac)] p-6 text-white shadow-[0_24px_70px_rgba(28,25,23,0.2)] lg:block">
-                <p className="font-mono text-sm opacity-75">NOTE</p>
-                <p className="mt-28 font-serif text-4xl font-semibold leading-tight">
-                  {post.category}
-                </p>
-              </div>
-            )}
           </div>
         </section>
 
