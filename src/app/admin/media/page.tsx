@@ -1,5 +1,6 @@
 import { uploadImageAction } from "@/app/actions";
 import { SiteHeader } from "@/components/site-header";
+import { SubmitButton } from "@/components/submit-button";
 import { requireAdmin } from "@/lib/auth";
 import Link from "next/link";
 
@@ -10,6 +11,14 @@ type MediaPageProps = {
 export default async function MediaPage({ searchParams }: MediaPageProps) {
   await requireAdmin();
   const { url, error } = await searchParams;
+  const errorMessage =
+    error === "config"
+      ? "Blob 存储未配置，请检查 Vercel 环境变量 BLOB_READ_WRITE_TOKEN。"
+      : error === "upload"
+        ? "上传失败，请稍后重试或换一张更小的图片。"
+        : error
+          ? "请选择一张图片。"
+          : "";
 
   return (
     <main>
@@ -23,7 +32,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           action={uploadImageAction}
           className="mt-8 space-y-4 rounded-lg border border-stone-200 bg-white p-6"
         >
-          {error ? <p className="text-sm text-red-700">请选择一张图片。</p> : null}
+          {errorMessage ? <p className="text-sm text-red-700">{errorMessage}</p> : null}
           <input
             required
             type="file"
@@ -31,9 +40,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
             accept="image/*"
             className="w-full rounded-md border border-stone-300 bg-white px-3 py-2"
           />
-          <button className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800">
-            上传
-          </button>
+          <SubmitButton label="上传" pendingLabel="上传中..." />
         </form>
         {url ? (
           <div className="mt-6 rounded-lg border border-stone-200 bg-white p-6">

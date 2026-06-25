@@ -18,7 +18,7 @@ export default async function Home() {
       <section className="border-b border-stone-200 bg-white">
         <div className="mx-auto max-w-6xl px-5 py-16">
           <p className="text-sm font-semibold uppercase tracking-wider text-[#2f6f73]">
-            Chiyu's Blog
+            Chiyu&apos;s Blog
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-stone-950 sm:text-5xl">
             池鱼的个人博客。

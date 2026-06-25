@@ -131,10 +131,20 @@ export async function uploadImageAction(formData: FormData) {
     redirect("/admin/media?error=1");
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    redirect("/admin/media?error=config");
+  }
+
   const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
-  const blob = await put(`blog/${Date.now()}-${safeName}`, file, {
-    access: "public",
-  });
+  let blob: Awaited<ReturnType<typeof put>>;
+
+  try {
+    blob = await put(`blog/${Date.now()}-${safeName}`, file, {
+      access: "public",
+    });
+  } catch {
+    redirect("/admin/media?error=upload");
+  }
 
   redirect(`/admin/media?url=${encodeURIComponent(blob.url)}`);
 }
