@@ -2,7 +2,7 @@
 
 本项目已经改为：
 
-- PostgreSQL：保存文章、评论、分类、标签、浏览量、点赞数和图片 URL
+- PostgreSQL：保存文章、评论、标签、浏览量、点赞数和图片 URL
 - Vercel Blob：保存后台上传的图片文件
 - Next.js：页面、后台和 API
 

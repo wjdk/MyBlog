@@ -9,7 +9,6 @@ export type Post = {
   excerpt: string;
   content: string;
   status: PostStatus;
-  category: string;
   tags: string[];
   coverImage: string;
   views: number;
@@ -21,6 +20,7 @@ export type Post = {
 export type Comment = {
   id: number;
   postId: number;
+  userId: string | null;
   author: string;
   content: string;
   status: "approved" | "hidden";
@@ -34,7 +34,6 @@ type PostRow = {
   excerpt: string;
   content: string;
   status: PostStatus;
-  category: string;
   tags: string;
   cover_image: string;
   views: number;
@@ -46,7 +45,9 @@ type PostRow = {
 type CommentRow = {
   id: number;
   post_id: number;
+  user_id: string | null;
   author: string;
+  username?: string | null;
   content: string;
   status: "approved" | "hidden";
   created_at: string | Date;
@@ -58,7 +59,6 @@ export type PostInput = {
   excerpt: string;
   content: string;
   status: PostStatus;
-  category: string;
   tags: string[];
   coverImage: string;
   submissionKey?: string;
@@ -67,7 +67,6 @@ export type PostInput = {
 export type PostFilters = {
   includeDrafts?: boolean;
   query?: string;
-  category?: string;
   tag?: string;
   limit?: number;
 };
@@ -84,7 +83,6 @@ function mapPost(row: PostRow): Post {
     excerpt: row.excerpt,
     content: row.content,
     status: row.status,
-    category: row.category,
     tags: splitTags(row.tags),
     coverImage: row.cover_image,
     views: Number(row.views),
@@ -98,7 +96,8 @@ function mapComment(row: CommentRow): Comment {
   return {
     id: Number(row.id),
     postId: Number(row.post_id),
-    author: row.author,
+    userId: row.user_id,
+    author: row.username || row.author,
     content: row.content,
     status: row.status,
     createdAt: toIso(row.created_at),
@@ -133,7 +132,6 @@ export async function listPosts(filters: PostFilters = {}) {
         OR content ILIKE ${`%${filters.query || ""}%`}
         OR tags ILIKE ${`%${filters.query || ""}%`}
       ))
-      AND (${filters.category || null}::text IS NULL OR category = ${filters.category || ""})
       AND (${filters.tag || null}::text IS NULL OR tags ILIKE ${`%${filters.tag || ""}%`})
     ORDER BY created_at DESC
     LIMIT ${limit}
@@ -209,12 +207,12 @@ export async function createPost(input: PostInput) {
   const rows = submissionKey
     ? await sql`
         INSERT INTO posts (
-          title, slug, excerpt, content, status, category, tags, cover_image,
+          title, slug, excerpt, content, status, tags, cover_image,
           views, submission_key, created_at, updated_at
         )
         VALUES (
           ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
-          ${input.status}, ${input.category}, ${input.tags.join(",")},
+          ${input.status}, ${input.tags.join(",")},
           ${input.coverImage}, 0, ${submissionKey}, NOW(), NOW()
         )
         ON CONFLICT (submission_key) DO UPDATE
@@ -223,12 +221,12 @@ export async function createPost(input: PostInput) {
       `
     : await sql`
         INSERT INTO posts (
-          title, slug, excerpt, content, status, category, tags, cover_image,
+          title, slug, excerpt, content, status, tags, cover_image,
           views, created_at, updated_at
         )
         VALUES (
           ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
-          ${input.status}, ${input.category}, ${input.tags.join(",")},
+          ${input.status}, ${input.tags.join(",")},
           ${input.coverImage}, 0, NOW(), NOW()
         )
         RETURNING *
@@ -253,7 +251,6 @@ export async function updatePost(id: number, input: PostInput) {
         excerpt = ${input.excerpt},
         content = ${input.content},
         status = ${input.status},
-        category = ${input.category},
         tags = ${input.tags.join(",")},
         cover_image = ${input.coverImage},
         updated_at = NOW()
@@ -280,12 +277,16 @@ export async function incrementViews(id: number) {
   await sql`UPDATE posts SET views = views + 1 WHERE id = ${id}`;
 }
 
-export async function addComment(postId: number, author: string, content: string) {
+export async function addComment(
+  postId: number,
+  user: { id: string; username: string },
+  content: string,
+) {
   await ensureSchema();
   const sql = getSql();
   await sql`
-    INSERT INTO comments (post_id, author, content, status, created_at)
-    VALUES (${postId}, ${author}, ${content}, 'approved', NOW())
+    INSERT INTO comments (post_id, user_id, author, content, status, created_at)
+    VALUES (${postId}, ${user.id}, ${user.username}, ${content}, 'approved', NOW())
   `;
 }
 
@@ -297,11 +298,12 @@ export async function listComments(postId: number, includeHidden = false) {
   await ensureSchema();
   const sql = getSql();
   const rows = await sql`
-    SELECT *
+    SELECT comments.*, users.username
     FROM comments
-    WHERE post_id = ${postId}
+    LEFT JOIN users ON comments.user_id = users.id::text
+    WHERE comments.post_id = ${postId}
       AND (${includeHidden}::boolean OR status = 'approved')
-    ORDER BY created_at DESC
+    ORDER BY comments.created_at DESC
   `;
 
   return (rows as CommentRow[]).map(mapComment);
@@ -320,27 +322,14 @@ export async function listAllComments() {
 
   await ensureSchema();
   const sql = getSql();
-  const rows = await sql`SELECT * FROM comments ORDER BY created_at DESC`;
-
-  return (rows as CommentRow[]).map(mapComment);
-}
-
-export async function listCategories() {
-  if (!hasDatabase()) {
-    return [];
-  }
-
-  await ensureSchema();
-  const sql = getSql();
   const rows = await sql`
-    SELECT category, COUNT(*)::int AS count
-    FROM posts
-    WHERE status = 'published'
-    GROUP BY category
-    ORDER BY category ASC
+    SELECT comments.*, users.username
+    FROM comments
+    LEFT JOIN users ON comments.user_id = users.id::text
+    ORDER BY comments.created_at DESC
   `;
 
-  return rows as { category: string; count: number }[];
+  return (rows as CommentRow[]).map(mapComment);
 }
 
 export async function listTags() {
@@ -370,11 +359,7 @@ export async function getAdjacentPosts(post: Post) {
 export async function getRelatedPosts(post: Post) {
   return (await listPosts({ limit: 8 }))
     .filter((item) => item.id !== post.id)
-    .filter(
-      (item) =>
-        item.category === post.category ||
-        item.tags.some((tag) => post.tags.includes(tag)),
-    )
+    .filter((item) => item.tags.some((tag) => post.tags.includes(tag)))
     .slice(0, 3);
 }
 

@@ -21,8 +21,6 @@ export function PostCard({ post }: { post: Post }) {
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-stone-500">
           <span>{formatDate(post.createdAt)}</span>
           <span>·</span>
-          <span>{post.category}</span>
-          <span>·</span>
           <span>{post.views} 阅读</span>
           <span>·</span>
           <span>{post.commentCount} 评论</span>

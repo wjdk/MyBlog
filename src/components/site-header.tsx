@@ -1,9 +1,10 @@
 import { logoutAction } from "@/app/actions";
-import { isAdmin } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 
 export async function SiteHeader() {
-  const admin = await isAdmin();
+  const user = await getCurrentUser();
+  const admin = user?.role === "admin";
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone-900/10 bg-[#fbf8f1]/82 backdrop-blur-xl">
@@ -28,7 +29,10 @@ export async function SiteHeader() {
           </button>
         </form>
         <nav className="order-2 flex items-center gap-1 text-sm font-medium text-stone-600 md:order-3">
-          <Link className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950" href="/">
+          <Link
+            className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950"
+            href="/"
+          >
             首页
           </Link>
           <Link
@@ -37,14 +41,19 @@ export async function SiteHeader() {
           >
             归档
           </Link>
-          {admin ? (
+          {user ? (
             <>
-              <Link
-                className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950"
-                href="/admin"
-              >
-                后台
-              </Link>
+              {admin ? (
+                <Link
+                  className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950"
+                  href="/admin"
+                >
+                  后台
+                </Link>
+              ) : null}
+              <span className="max-w-32 truncate rounded-full px-3 py-2 text-stone-500">
+                {user.username}
+              </span>
               <form action={logoutAction}>
                 <button className="rounded-full px-3 py-2 transition hover:bg-white/80 hover:text-stone-950">
                   退出

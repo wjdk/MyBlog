@@ -1,6 +1,7 @@
 import { addCommentAction } from "@/app/actions";
 import { MarkdownView } from "@/components/markdown-view";
 import { SiteHeader } from "@/components/site-header";
+import { getCurrentUser } from "@/lib/auth";
 import {
   getAdjacentPosts,
   getPostBySlug,
@@ -50,10 +51,11 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   await incrementViews(post.id);
-  const [comments, related, adjacent] = await Promise.all([
+  const [comments, related, adjacent, currentUser] = await Promise.all([
     listComments(post.id),
     getRelatedPosts(post),
     getAdjacentPosts(post),
+    getCurrentUser(),
   ]);
 
   return (
@@ -71,13 +73,6 @@ export default async function PostPage({ params }: PostPageProps) {
               </Link>
               <div className="mt-8 flex flex-wrap items-center gap-2 font-mono text-sm text-stone-500">
                 <span>{formatDate(post.createdAt)}</span>
-                <span>·</span>
-                <Link
-                  className="transition hover:text-[#2f6f73]"
-                  href={`/categories/${encodeURIComponent(post.category)}`}
-                >
-                  {post.category}
-                </Link>
                 <span>·</span>
                 <span>{post.views + 1} 阅读</span>
                 <span>·</span>
@@ -140,31 +135,43 @@ export default async function PostPage({ params }: PostPageProps) {
 
           <section id="comments" className="mt-12 max-w-4xl">
             <h2 className="font-serif text-3xl font-semibold text-stone-950">评论</h2>
-            <form
-              action={addCommentAction.bind(null, post.id, post.slug)}
-              className="mt-5 space-y-3 rounded-[1.25rem] bg-[#fffdf8]/85 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]"
-            >
-              <input
-                required
-                name="author"
-                className="w-full rounded-xl border border-stone-300 bg-white/80 px-3 py-2 outline-none transition focus:border-[#2f6f73]"
-                placeholder="你的名字"
-              />
-              <textarea
-                required
-                name="content"
-                rows={4}
-                className="w-full rounded-xl border border-stone-300 bg-white/80 px-3 py-2 outline-none transition focus:border-[#2f6f73]"
-                placeholder="写下你的想法"
-              />
-              <button className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#2f6f73] active:translate-y-0">
-                发表评论
-              </button>
-            </form>
+            {currentUser ? (
+              <form
+                action={addCommentAction.bind(null, post.id, post.slug)}
+                className="mt-5 space-y-3 rounded-[1.25rem] bg-[#fffdf8]/85 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]"
+              >
+                <p className="text-sm text-stone-500">
+                  以 <strong className="text-stone-950">{currentUser.username}</strong> 的身份发表评论
+                </p>
+                <textarea
+                  required
+                  name="content"
+                  rows={4}
+                  className="w-full rounded-xl border border-stone-300 bg-white/80 px-3 py-2 outline-none transition focus:border-[#2f6f73]"
+                  placeholder="写下你的想法"
+                />
+                <button className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#2f6f73] active:translate-y-0">
+                  发表评论
+                </button>
+              </form>
+            ) : (
+              <div className="mt-5 rounded-[1.25rem] border border-dashed border-stone-300 bg-white/65 p-5 text-stone-600">
+                登录后即可参与评论。
+                <Link
+                  href="/login"
+                  className="ml-3 font-semibold text-[#2f6f73] transition hover:text-[#24575a]"
+                >
+                  去登录
+                </Link>
+              </div>
+            )}
             <div className="mt-6 space-y-4">
               {comments.length ? (
                 comments.map((comment) => (
-                  <div key={comment.id} className="rounded-2xl bg-white/75 p-4 shadow-[0_1px_0_rgba(28,25,23,0.08)]">
+                  <div
+                    key={comment.id}
+                    className="rounded-2xl bg-white/75 p-4 shadow-[0_1px_0_rgba(28,25,23,0.08)]"
+                  >
                     <div className="flex justify-between gap-3 text-sm text-stone-500">
                       <strong className="text-stone-950">{comment.author}</strong>
                       <span className="font-mono">{formatDate(comment.createdAt)}</span>

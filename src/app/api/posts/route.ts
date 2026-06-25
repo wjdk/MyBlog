@@ -19,7 +19,6 @@ export async function POST(request: Request) {
     slug: String(body.slug || ""),
     excerpt: String(body.excerpt || ""),
     content: String(body.content || ""),
-    category: String(body.category || "随笔"),
     tags: Array.isArray(body.tags) ? body.tags : splitTags(String(body.tags || "")),
     coverImage: String(body.coverImage || ""),
     status: body.status === "published" ? "published" : "draft",

@@ -44,16 +44,6 @@ export function PostForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-stone-700">分类</span>
-          <input
-            name="category"
-            defaultValue={post?.category || "随笔"}
-            className="mt-2 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-950 outline-none focus:border-[#2f6f73]"
-            placeholder="例如：技术、生活、项目记录"
-          />
-        </label>
-
-        <label className="block">
           <span className="text-sm font-medium text-stone-700">标签</span>
           <input
             name="tags"

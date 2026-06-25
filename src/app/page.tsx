@@ -1,16 +1,12 @@
 import { PostCard } from "@/components/post-card";
 import { SiteHeader } from "@/components/site-header";
-import { listCategories, listPosts, listTags } from "@/lib/posts";
+import { listPosts, listTags } from "@/lib/posts";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [posts, categories, tags] = await Promise.all([
-    listPosts(),
-    listCategories(),
-    listTags(),
-  ]);
+  const [posts, tags] = await Promise.all([listPosts(), listTags()]);
 
   return (
     <main id="main-content">
@@ -41,9 +37,8 @@ export default async function Home() {
           </div>
           <div className="w-full min-w-0 max-w-[20rem] overflow-hidden rounded-[1.5rem] bg-stone-950 p-6 text-white shadow-[0_24px_70px_rgba(28,25,23,0.25)] sm:max-w-full">
             <p className="text-sm text-stone-300">当前内容</p>
-            <div className="mt-6 grid grid-cols-1 gap-3 text-center sm:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-3 text-center sm:grid-cols-2">
               <Stat value={posts.length} label="文章" />
-              <Stat value={categories.length} label="分类" />
               <Stat value={tags.length} label="标签" />
             </div>
           </div>
@@ -73,22 +68,6 @@ export default async function Home() {
         </div>
 
         <aside className="space-y-5 lg:pt-14">
-          <div className="rounded-[1.25rem] bg-[#fffdf8]/90 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]">
-            <h2 className="font-semibold text-stone-950">分类</h2>
-            <div className="mt-4 space-y-2">
-              {categories.map((item) => (
-                <Link
-                  key={item.category}
-                  href={`/categories/${encodeURIComponent(item.category)}`}
-                  className="flex justify-between rounded-lg px-3 py-2 text-sm text-stone-600 transition hover:bg-stone-100 hover:text-stone-950"
-                >
-                  <span>{item.category}</span>
-                  <span className="font-mono tabular-nums">{item.count}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
           <div className="rounded-[1.25rem] bg-[#fffdf8]/90 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]">
             <h2 className="font-semibold text-stone-950">标签</h2>
             <div className="mt-4 flex flex-wrap gap-2">

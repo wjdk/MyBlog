@@ -42,7 +42,6 @@ async function createSchema() {
       excerpt TEXT NOT NULL,
       content TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'draft',
-      category TEXT NOT NULL DEFAULT '随笔',
       tags TEXT NOT NULL DEFAULT '',
       cover_image TEXT NOT NULL DEFAULT '',
       views INTEGER NOT NULL DEFAULT 0,
@@ -59,9 +58,20 @@ async function createSchema() {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS comments (
       id SERIAL PRIMARY KEY,
       post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+      user_id TEXT,
       author TEXT NOT NULL,
       content TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'approved',
@@ -69,12 +79,36 @@ async function createSchema() {
     );
   `;
 
+  await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS user_id TEXT`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      role TEXT NOT NULL DEFAULT 'admin',
+      expires_at TIMESTAMPTZ NOT NULL,
+      revoked_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS sessions_user_id_idx
+    ON sessions (user_id)
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS sessions_expires_at_idx
+    ON sessions (expires_at)
+  `;
+
   const rows = await sql`SELECT COUNT(*)::int AS count FROM posts`;
 
   if (Number(rows[0]?.count || 0) === 0) {
     await sql`
       INSERT INTO posts (
-        title, slug, excerpt, content, status, category, tags, cover_image,
+        title, slug, excerpt, content, status, tags, cover_image,
         views, created_at, updated_at
       )
       VALUES (
@@ -86,10 +120,9 @@ async function createSchema() {
 这个项目使用 Next.js 提供页面和后端接口，用 PostgreSQL 保存文章数据，用 Vercel Blob 保存图片。
 
 - 可以新建、编辑、删除文章
-- 支持分类、标签、封面图和 Markdown
+- 支持标签、封面图和 Markdown
 - 支持评论、浏览量、搜索、RSS 和 Sitemap',
         'published',
-        '项目记录',
         'Next.js,PostgreSQL,Vercel Blob,个人博客',
         '',
         0,

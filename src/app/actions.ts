@@ -12,9 +12,11 @@ import {
 } from "@/lib/posts";
 import {
   clearAdminSession,
-  getAdminPassword,
+  loginUser,
+  registerUser,
   requireAdmin,
-  setAdminSession,
+  requireUser,
+  setUserSession,
 } from "@/lib/auth";
 import { del, put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
@@ -25,7 +27,6 @@ function readPostForm(formData: FormData): PostInput {
   const content = String(formData.get("content") || "").trim();
   const excerpt = String(formData.get("excerpt") || "").trim();
   const slug = String(formData.get("slug") || "").trim();
-  const category = String(formData.get("category") || "随笔").trim();
   const coverImage = String(formData.get("coverImage") || "").trim();
   const tags = splitTags(String(formData.get("tags") || ""));
   const status = formData.get("status") === "published" ? "published" : "draft";
@@ -41,7 +42,6 @@ function readPostForm(formData: FormData): PostInput {
     excerpt,
     content,
     status,
-    category: category || "随笔",
     tags,
     coverImage,
     submissionKey: submissionKey || undefined,
@@ -49,14 +49,30 @@ function readPostForm(formData: FormData): PostInput {
 }
 
 export async function loginAction(formData: FormData) {
+  const username = String(formData.get("username") || "");
   const password = String(formData.get("password") || "");
+  const result = await loginUser(username, password);
 
-  if (password !== getAdminPassword()) {
-    redirect("/login?error=1");
+  if (!result.ok) {
+    redirect("/login?error=invalid");
   }
 
-  await setAdminSession();
-  redirect("/admin");
+  await setUserSession(result.user);
+  redirect(result.user.role === "admin" ? "/admin" : "/");
+}
+
+export async function registerAction(formData: FormData) {
+  const username = String(formData.get("username") || "");
+  const email = String(formData.get("email") || "");
+  const password = String(formData.get("password") || "");
+  const result = await registerUser(username, email, password);
+
+  if (!result.ok) {
+    redirect(`/login?mode=register&error=${result.error}`);
+  }
+
+  await setUserSession(result.user);
+  redirect("/");
 }
 
 export async function logoutAction() {
@@ -108,11 +124,11 @@ export async function addCommentAction(
   slug: string,
   formData: FormData,
 ) {
-  const author = String(formData.get("author") || "").trim();
+  const user = await requireUser();
   const content = String(formData.get("content") || "").trim();
 
-  if (author && content) {
-    await addComment(postId, author.slice(0, 40), content.slice(0, 800));
+  if (content) {
+    await addComment(postId, user, content.slice(0, 800));
   }
 
   revalidatePath(postPath(slug));

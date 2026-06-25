@@ -43,17 +43,16 @@ export default async function AdminPage() {
 
         <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
           <div className="min-w-[760px]">
-            <div className="grid grid-cols-[1fr_110px_120px_120px_180px] gap-4 border-b border-stone-200 px-5 py-3 text-sm font-semibold text-stone-500">
+            <div className="grid grid-cols-[1fr_110px_120px_180px] gap-4 border-b border-stone-200 px-5 py-3 text-sm font-semibold text-stone-500">
               <span>文章</span>
               <span>状态</span>
-              <span>分类</span>
               <span>数据</span>
               <span>操作</span>
             </div>
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="grid grid-cols-[1fr_110px_120px_120px_180px] items-center gap-4 border-b border-stone-100 px-5 py-4 last:border-0"
+                className="grid grid-cols-[1fr_110px_120px_180px] items-center gap-4 border-b border-stone-100 px-5 py-4 last:border-0"
               >
                 <div>
                   <p className="font-semibold text-stone-950">{post.title}</p>
@@ -67,7 +66,6 @@ export default async function AdminPage() {
                 <span className="text-sm text-stone-600">
                   {post.status === "published" ? "已发布" : "草稿"}
                 </span>
-                <span className="text-sm text-stone-600">{post.category}</span>
                 <span className="text-sm text-stone-600">
                   {post.views} 读 / {post.commentCount} 评论
                 </span>
