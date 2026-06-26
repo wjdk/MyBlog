@@ -1,4 +1,7 @@
-import { importPostsAction } from "@/app/actions";
+import {
+  importPostsWithImagesAction,
+  localizeExistingPostImagesAction,
+} from "@/app/actions";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitButton } from "@/components/submit-button";
 import { requireAdmin } from "@/lib/auth";
@@ -10,6 +13,9 @@ type ImportExportPageProps = {
     updated?: string;
     skipped?: string;
     failed?: string;
+    imagesUploaded?: string;
+    imagesFailed?: string;
+    syncedPosts?: string;
     error?: string;
     message?: string;
   }>;
@@ -20,7 +26,15 @@ export const dynamic = "force-dynamic";
 export default async function ImportExportPage({ searchParams }: ImportExportPageProps) {
   await requireAdmin();
   const params = await searchParams;
-  const hasResult = Boolean(params.created || params.updated || params.skipped || params.failed);
+  const hasResult = Boolean(
+    params.created ||
+      params.updated ||
+      params.skipped ||
+      params.failed ||
+      params.syncedPosts ||
+      params.imagesUploaded ||
+      params.imagesFailed,
+  );
 
   return (
     <main>
@@ -33,7 +47,7 @@ export default async function ImportExportPage({ searchParams }: ImportExportPag
         <div className="mt-6">
           <h1 className="text-3xl font-semibold text-stone-950">博文导入导出</h1>
           <p className="mt-2 text-stone-600">
-            批量备份或迁移文章，导出的 JSON 包含草稿、已发布文章、标签、封面、时间和浏览量。
+            批量备份或迁移文章，导入时可以自动把远程图片搬到 Vercel Blob。
           </p>
         </div>
 
@@ -49,6 +63,13 @@ export default async function ImportExportPage({ searchParams }: ImportExportPag
             <p className="mt-1">
               新增 {params.created || 0} 篇，更新 {params.updated || 0} 篇，跳过{" "}
               {params.skipped || 0} 篇，失败 {params.failed || 0} 篇。
+            </p>
+            {params.syncedPosts ? (
+              <p className="mt-1">同步现有文章图片链接 {params.syncedPosts} 篇。</p>
+            ) : null}
+            <p className="mt-1">
+              图片迁移成功 {params.imagesUploaded || 0} 张，失败{" "}
+              {params.imagesFailed || 0} 张。
             </p>
             {params.message ? <p className="mt-2">{params.message}</p> : null}
           </div>
@@ -69,7 +90,7 @@ export default async function ImportExportPage({ searchParams }: ImportExportPag
           </section>
 
           <form
-            action={importPostsAction}
+            action={importPostsWithImagesAction}
             className="space-y-5 rounded-lg border border-stone-200 bg-white p-6"
           >
             <div>
@@ -103,9 +124,40 @@ export default async function ImportExportPage({ searchParams }: ImportExportPag
               </select>
             </label>
 
+            <label className="flex items-start gap-3 rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+              <input
+                type="checkbox"
+                name="localizeImages"
+                defaultChecked
+                className="mt-1 h-4 w-4 rounded border-stone-300 accent-[#2f6f73]"
+              />
+              <span>
+                <span className="block text-sm font-medium text-stone-800">
+                  迁移远程图片到 Vercel Blob
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-stone-600">
+                  自动解析 Markdown 图片、HTML img 标签和封面图，上传成功后替换文章里的链接。
+                </span>
+              </span>
+            </label>
+
             <SubmitButton label="开始导入" pendingLabel="导入中..." />
           </form>
         </div>
+
+        <section className="mt-6 rounded-lg border border-stone-200 bg-white p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-stone-950">同步现有博文图片</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">
+                扫描已经导入的文章，把正文和封面里的远程图片上传到 Vercel Blob，并替换文章链接。
+              </p>
+            </div>
+            <form action={localizeExistingPostImagesAction}>
+              <SubmitButton label="同步图片" pendingLabel="同步中..." />
+            </form>
+          </div>
+        </section>
 
         <section className="mt-6 rounded-lg border border-stone-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-stone-950">JSON 格式</h2>
@@ -119,10 +171,10 @@ export default async function ImportExportPage({ searchParams }: ImportExportPag
       "title": "文章标题",
       "slug": "post-slug",
       "excerpt": "摘要",
-      "content": "Markdown 正文",
+      "content": "Markdown 正文，支持 ![](https://...) 和 <img src=\\"https://...\\" />",
       "status": "published",
       "tags": ["Next.js", "博客"],
-      "coverImage": "",
+      "coverImage": "https://example.com/cover.jpg",
       "views": 0,
       "createdAt": "2026-06-26T00:00:00.000Z",
       "updatedAt": "2026-06-26T00:00:00.000Z"

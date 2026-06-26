@@ -122,6 +122,49 @@ export function MarkdownView({ content }: { content: string }) {
       }
     }
 
+    if (blockLine.toLowerCase() === "<details>") {
+      flushList();
+      const detailLines: string[] = [];
+      let summary = "展开内容";
+      let currentIndex = index + 1;
+
+      while (currentIndex < lines.length) {
+        const detailLine = lines[currentIndex].replace(/\r$/, "");
+        const trimmedDetailLine = detailLine.trim();
+        const summaryMatch = trimmedDetailLine.match(/^<summary>(.*)<\/summary>$/i);
+
+        if (summaryMatch) {
+          summary = summaryMatch[1].trim() || summary;
+          currentIndex += 1;
+          continue;
+        }
+
+        if (trimmedDetailLine.toLowerCase() === "</details>") {
+          break;
+        }
+
+        detailLines.push(detailLine);
+        currentIndex += 1;
+      }
+
+      blocks.push(
+        <details
+          key={`details-${blocks.length}`}
+          className="rounded-2xl border border-stone-200 bg-white/80 p-5"
+        >
+          <summary className="cursor-pointer font-semibold text-[#2f6f73]">
+            {renderInline(summary, `summary-${blocks.length}`)}
+          </summary>
+          <div className="mt-5">
+            <MarkdownView content={detailLines.join("\n")} />
+          </div>
+        </details>,
+      );
+
+      index = currentIndex;
+      continue;
+    }
+
     if (blockLine.startsWith("# ")) {
       flushList();
       blocks.push(

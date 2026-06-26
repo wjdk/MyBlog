@@ -6,6 +6,7 @@ import {
   deleteComment,
   deletePost,
   importPosts,
+  listPosts,
   postPath,
   splitTags,
   updatePost,
@@ -15,6 +16,7 @@ import {
   normalizeConflictStrategy,
   parsePostImportJson,
 } from "@/lib/post-transfer";
+import { localizeImportedPostImages } from "@/lib/post-image-import";
 import {
   clearAdminSession,
   loginUser,
@@ -155,6 +157,114 @@ export async function importPostsAction(formData: FormData) {
     target = `/admin/import-export?${params.toString()}`;
   } catch (error) {
     const message = error instanceof Error ? error.message : "导入失败";
+    target = `/admin/import-export?error=${encodeURIComponent(message)}`;
+  }
+
+  redirect(target);
+}
+
+export async function importPostsWithImagesAction(formData: FormData) {
+  await requireAdmin();
+
+  const file = formData.get("postsFile");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/admin/import-export?error=file");
+  }
+
+  let target = "/admin/import-export";
+
+  try {
+    let posts = parsePostImportJson(await file.text());
+    let imagesUploaded = 0;
+    let imagesFailed = 0;
+    const imageErrors: string[] = [];
+
+    if (formData.get("localizeImages") === "on") {
+      const imageResult = await localizeImportedPostImages(posts);
+      posts = imageResult.posts;
+      imagesUploaded = imageResult.uploaded;
+      imagesFailed = imageResult.failed;
+      imageErrors.push(...imageResult.errors);
+    }
+
+    const result = await importPosts(
+      posts,
+      normalizeConflictStrategy(formData.get("conflictStrategy")),
+    );
+    const params = new URLSearchParams({
+      created: String(result.created),
+      updated: String(result.updated),
+      skipped: String(result.skipped),
+      failed: String(result.failed),
+      imagesUploaded: String(imagesUploaded),
+      imagesFailed: String(imagesFailed),
+    });
+
+    const errors = [...imageErrors, ...result.errors];
+    if (errors.length) {
+      params.set("message", errors.slice(0, 3).join("；"));
+    }
+
+    revalidateAll();
+    target = `/admin/import-export?${params.toString()}`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "导入失败";
+    target = `/admin/import-export?error=${encodeURIComponent(message)}`;
+  }
+
+  redirect(target);
+}
+
+export async function localizeExistingPostImagesAction() {
+  await requireAdmin();
+
+  let target = "/admin/import-export";
+
+  try {
+    const posts = await listPosts({ includeDrafts: true, limit: 1000 });
+    const imageResult = await localizeImportedPostImages(
+      posts.map((post) => ({
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        status: post.status,
+        tags: post.tags,
+        coverImage: post.coverImage,
+        views: post.views,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+      })),
+    );
+    let updatedPosts = 0;
+
+    for (const [index, localizedPost] of imageResult.posts.entries()) {
+      const originalPost = posts[index];
+
+      if (
+        originalPost &&
+        (localizedPost.content !== originalPost.content ||
+          localizedPost.coverImage !== originalPost.coverImage)
+      ) {
+        await updatePost(originalPost.id, localizedPost);
+        updatedPosts += 1;
+      }
+    }
+
+    const params = new URLSearchParams({
+      syncedPosts: String(updatedPosts),
+      imagesUploaded: String(imageResult.uploaded),
+      imagesFailed: String(imageResult.failed),
+    });
+
+    if (imageResult.errors.length) {
+      params.set("message", imageResult.errors.slice(0, 3).join("；"));
+    }
+
+    revalidateAll();
+    target = `/admin/import-export?${params.toString()}`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "图片同步失败";
     target = `/admin/import-export?error=${encodeURIComponent(message)}`;
   }
 

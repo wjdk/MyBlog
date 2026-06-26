@@ -170,7 +170,16 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
 
 async function getBlogImages(): Promise<MediaListState> {
   try {
-    const { blobs } = await list({ prefix: "blog/", limit: 100 });
+    const blobs: ListBlobResultBlob[] = [];
+    let cursor: string | undefined;
+    let hasMore = true;
+
+    while (hasMore) {
+      const page = await list({ prefix: "blog/", limit: 1000, cursor });
+      blobs.push(...page.blobs);
+      cursor = page.cursor;
+      hasMore = page.hasMore;
+    }
 
     return {
       blobs: blobs.sort(
