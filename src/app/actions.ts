@@ -215,6 +215,37 @@ export async function uploadImageAction(formData: FormData) {
   redirect(`/admin/media?url=${encodeURIComponent(blob.url)}`);
 }
 
+export async function replaceImageAction(pathname: string, formData: FormData) {
+  await requireAdmin();
+
+  if (!pathname.startsWith("blog/")) {
+    redirect("/admin/media?error=replace-scope");
+  }
+
+  const file = formData.get("image");
+
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/admin/media?error=replace-file");
+  }
+
+  let blob: Awaited<ReturnType<typeof put>>;
+
+  try {
+    blob = await put(pathname, file, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 60,
+      contentType: file.type || undefined,
+    });
+  } catch {
+    redirect("/admin/media?error=replace");
+  }
+
+  revalidatePath("/admin/media");
+  redirect(`/admin/media?replaced=1&url=${encodeURIComponent(blob.url)}`);
+}
+
 export async function deleteImageAction(pathname: string) {
   await requireAdmin();
 
