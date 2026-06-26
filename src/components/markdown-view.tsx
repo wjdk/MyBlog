@@ -90,8 +90,10 @@ export function MarkdownView({ content }: { content: string }) {
   }
 
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (line.trim().startsWith("```")) {
+    const line = lines[index].replace(/\r$/, "");
+    const blockLine = line.trimStart();
+
+    if (blockLine.startsWith("```")) {
       if (inCode) {
         flushCode();
       } else {
@@ -120,17 +122,17 @@ export function MarkdownView({ content }: { content: string }) {
       }
     }
 
-    if (line.startsWith("# ")) {
+    if (blockLine.startsWith("# ")) {
       flushList();
       blocks.push(
         <h1 key={`h1-${blocks.length}`} className="pt-4 font-serif text-4xl font-semibold text-stone-950 text-balance">
-          {renderInline(line.slice(2), `h1-${blocks.length}`)}
+          {renderInline(blockLine.slice(2), `h1-${blocks.length}`)}
         </h1>,
       );
       continue;
     }
 
-    const headingMatch = line.match(/^(#{4,6})\s+(.+)$/);
+    const headingMatch = blockLine.match(/^(#{4,6})\s+(.+)$/);
     if (headingMatch) {
       flushList();
       const level = headingMatch[1].length;
@@ -148,46 +150,46 @@ export function MarkdownView({ content }: { content: string }) {
       continue;
     }
 
-    if (line.startsWith("### ")) {
+    if (blockLine.startsWith("### ")) {
       flushList();
       blocks.push(
         <h3 key={`h3-${blocks.length}`} className="pt-2 text-2xl font-semibold text-stone-950 text-balance">
-          {renderInline(line.slice(4), `h3-${blocks.length}`)}
+          {renderInline(blockLine.slice(4), `h3-${blocks.length}`)}
         </h3>,
       );
       continue;
     }
 
-    if (line.startsWith("## ")) {
+    if (blockLine.startsWith("## ")) {
       flushList();
       blocks.push(
         <h2 key={`h2-${blocks.length}`} className="pt-4 font-serif text-3xl font-semibold text-stone-950 text-balance">
-          {renderInline(line.slice(3), `h2-${blocks.length}`)}
+          {renderInline(blockLine.slice(3), `h2-${blocks.length}`)}
         </h2>,
       );
       continue;
     }
 
-    if (line.startsWith("> ")) {
+    if (blockLine.startsWith("> ")) {
       flushList();
       blocks.push(
         <blockquote
           key={`quote-${blocks.length}`}
           className="rounded-r-2xl border-l-4 border-[#2f6f73] bg-white/80 px-5 py-4 text-stone-700"
         >
-          {renderInline(line.slice(2), `quote-${blocks.length}`)}
+          {renderInline(blockLine.slice(2), `quote-${blocks.length}`)}
         </blockquote>,
       );
       continue;
     }
 
-    if (line.startsWith("- ")) {
+    if (blockLine.startsWith("- ")) {
       orderedListItems = [];
-      listItems.push(line.slice(2));
+      listItems.push(blockLine.slice(2));
       continue;
     }
 
-    const orderedMatch = line.match(/^\d+\.\s+(.+)$/);
+    const orderedMatch = blockLine.match(/^\d+\.\s+(.+)$/);
     if (orderedMatch) {
       listItems = [];
       orderedListItems.push(orderedMatch[1]);
