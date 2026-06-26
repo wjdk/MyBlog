@@ -5,11 +5,16 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  importPosts,
   postPath,
   splitTags,
   updatePost,
   type PostInput,
 } from "@/lib/posts";
+import {
+  normalizeConflictStrategy,
+  parsePostImportJson,
+} from "@/lib/post-transfer";
 import {
   clearAdminSession,
   loginUser,
@@ -117,6 +122,43 @@ export async function deletePostAction(id: number) {
 
   revalidateAll();
   redirect("/admin");
+}
+
+export async function importPostsAction(formData: FormData) {
+  await requireAdmin();
+
+  const file = formData.get("postsFile");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/admin/import-export?error=file");
+  }
+
+  let target = "/admin/import-export";
+
+  try {
+    const posts = parsePostImportJson(await file.text());
+    const result = await importPosts(
+      posts,
+      normalizeConflictStrategy(formData.get("conflictStrategy")),
+    );
+    const params = new URLSearchParams({
+      created: String(result.created),
+      updated: String(result.updated),
+      skipped: String(result.skipped),
+      failed: String(result.failed),
+    });
+
+    if (result.errors.length) {
+      params.set("message", result.errors.slice(0, 3).join("；"));
+    }
+
+    revalidateAll();
+    target = `/admin/import-export?${params.toString()}`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "导入失败";
+    target = `/admin/import-export?error=${encodeURIComponent(message)}`;
+  }
+
+  redirect(target);
 }
 
 export async function addCommentAction(

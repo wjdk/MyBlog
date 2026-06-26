@@ -66,6 +66,22 @@ export type PostInput = {
   submissionKey?: string;
 };
 
+export type ImportedPostInput = PostInput & {
+  createdAt?: string;
+  updatedAt?: string;
+  views?: number;
+};
+
+export type ImportConflictStrategy = "skip" | "overwrite" | "rename";
+
+export type ImportPostsResult = {
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  errors: string[];
+};
+
 export type PostFilters = {
   includeDrafts?: boolean;
   query?: string;
@@ -238,6 +254,52 @@ export async function createPost(input: PostInput) {
   return mapPost(rows[0] as PostRow);
 }
 
+export async function importPosts(
+  inputs: ImportedPostInput[],
+  conflictStrategy: ImportConflictStrategy = "skip",
+): Promise<ImportPostsResult> {
+  await ensureSchema();
+
+  const result: ImportPostsResult = {
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    failed: 0,
+    errors: [],
+  };
+
+  for (const [index, input] of inputs.entries()) {
+    try {
+      const normalized = normalizeImportedPost(input);
+      const targetSlug = slugify(normalized.slug || normalized.title);
+      const existing = await getPostBySlug(targetSlug, {
+        includeDrafts: true,
+      });
+
+      if (existing && conflictStrategy === "skip") {
+        result.skipped += 1;
+        continue;
+      }
+
+      if (existing && conflictStrategy === "overwrite") {
+        await updateImportedPost(existing.id, normalized);
+        result.updated += 1;
+        continue;
+      }
+
+      await createImportedPost(normalized, conflictStrategy === "rename");
+      result.created += 1;
+    } catch (error) {
+      result.failed += 1;
+      result.errors.push(
+        `第 ${index + 1} 篇导入失败：${error instanceof Error ? error.message : "未知错误"}`,
+      );
+    }
+  }
+
+  return result;
+}
+
 export async function updatePost(id: number, input: PostInput) {
   const existing = await getPostById(id);
 
@@ -257,6 +319,53 @@ export async function updatePost(id: number, input: PostInput) {
         tags = ${input.tags.join(",")},
         cover_image = ${input.coverImage},
         updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `;
+
+  return rows[0] ? mapPost(rows[0] as PostRow) : null;
+}
+
+async function createImportedPost(input: ImportedPostInput, allowRename: boolean) {
+  const sql = getSql();
+  const slug = allowRename
+    ? await uniqueSlug(input.slug || input.title)
+    : slugify(input.slug || input.title);
+  const createdAt = input.createdAt ? new Date(input.createdAt) : new Date();
+  const updatedAt = input.updatedAt ? new Date(input.updatedAt) : createdAt;
+  const rows = await sql`
+    INSERT INTO posts (
+      title, slug, excerpt, content, status, tags, cover_image,
+      views, created_at, updated_at
+    )
+    VALUES (
+      ${input.title}, ${slug}, ${input.excerpt}, ${input.content},
+      ${input.status}, ${input.tags.join(",")},
+      ${input.coverImage}, ${input.views || 0}, ${createdAt}, ${updatedAt}
+    )
+    RETURNING *
+  `;
+
+  return mapPost(rows[0] as PostRow);
+}
+
+async function updateImportedPost(id: number, input: ImportedPostInput) {
+  const sql = getSql();
+  const slug = slugify(input.slug || input.title);
+  const createdAt = input.createdAt ? new Date(input.createdAt) : new Date();
+  const updatedAt = input.updatedAt ? new Date(input.updatedAt) : createdAt;
+  const rows = await sql`
+    UPDATE posts
+    SET title = ${input.title},
+        slug = ${slug},
+        excerpt = ${input.excerpt},
+        content = ${input.content},
+        status = ${input.status},
+        tags = ${input.tags.join(",")},
+        cover_image = ${input.coverImage},
+        views = ${input.views || 0},
+        created_at = ${createdAt},
+        updated_at = ${updatedAt}
     WHERE id = ${id}
     RETURNING *
   `;
@@ -428,6 +537,43 @@ export function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 
   return slug || `post-${Date.now()}`;
+}
+
+function normalizeImportedPost(input: ImportedPostInput): ImportedPostInput {
+  const title = String(input.title || "").trim();
+  const content = String(input.content || "").trim();
+
+  if (!title || !content) {
+    throw new Error("标题和正文不能为空");
+  }
+
+  return {
+    title,
+    slug: String(input.slug || title).trim(),
+    excerpt: String(input.excerpt || "").trim(),
+    content,
+    status: input.status === "published" ? "published" : "draft",
+    tags: Array.isArray(input.tags)
+      ? input.tags.map(String).map((tag) => tag.trim()).filter(Boolean)
+      : [],
+    coverImage: String(input.coverImage || "").trim(),
+    createdAt: validDateString(input.createdAt),
+    updatedAt: validDateString(input.updatedAt),
+    views: safeCount(input.views),
+  };
+}
+
+function validDateString(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function safeCount(value?: number) {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : 0;
 }
 
 export function postPath(slug: string) {

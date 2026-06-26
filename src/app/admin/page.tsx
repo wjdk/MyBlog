@@ -34,6 +34,12 @@ export default async function AdminPage() {
               媒体
             </Link>
             <Link
+              href="/admin/import-export"
+              className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-900 hover:border-stone-400"
+            >
+              导入导出
+            </Link>
+            <Link
               href="/admin/posts/new"
               className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800"
             >
