@@ -12,6 +12,7 @@ import {
   updatePost,
   type PostInput,
 } from "@/lib/posts";
+import { hasDatabase } from "@/lib/db";
 import {
   normalizeConflictStrategy,
   parsePostImportJson,
@@ -25,7 +26,7 @@ import {
   requireUser,
   setUserSession,
 } from "@/lib/auth";
-import { del, put } from "@vercel/blob";
+import { del, list, put, type ListBlobResultBlob } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -371,6 +372,70 @@ export async function deleteImageAction(pathname: string) {
 
   revalidatePath("/admin/media");
   redirect("/admin/media?deleted=1");
+}
+
+export async function deleteUnusedImagesAction() {
+  await requireAdmin();
+
+  if (!hasDatabase()) {
+    redirect("/admin/media?error=cleanup-db");
+  }
+
+  let deleted = 0;
+  let failed = 0;
+
+  try {
+    const [posts, blobs] = await Promise.all([
+      listPosts({ includeDrafts: true, limit: 1000 }),
+      listBlogImageBlobs(),
+    ]);
+    const references = posts.flatMap((post) => [post.coverImage, post.content]);
+    const unusedBlobs = blobs.filter((blob) => !isBlobReferenced(blob, references));
+
+    for (const blob of unusedBlobs) {
+      try {
+        await del(blob.pathname);
+        deleted += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+  } catch {
+    redirect("/admin/media?error=cleanup");
+  }
+
+  revalidatePath("/admin/media");
+  const params = new URLSearchParams({
+    cleanupDeleted: String(deleted),
+    cleanupFailed: String(failed),
+  });
+
+  redirect(`/admin/media?${params.toString()}`);
+}
+
+async function listBlogImageBlobs() {
+  const blobs: ListBlobResultBlob[] = [];
+  let cursor: string | undefined;
+  let hasMore = true;
+
+  while (hasMore) {
+    const page = await list({ prefix: "blog/", limit: 1000, cursor });
+    blobs.push(...page.blobs);
+    cursor = page.cursor;
+    hasMore = page.hasMore;
+  }
+
+  return blobs;
+}
+
+function isBlobReferenced(blob: ListBlobResultBlob, references: string[]) {
+  return references.some((reference) => {
+    if (!reference) {
+      return false;
+    }
+
+    return reference.includes(blob.url) || reference.includes(blob.pathname);
+  });
 }
 
 function revalidateAll() {

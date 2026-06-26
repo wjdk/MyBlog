@@ -1,4 +1,9 @@
-import { deleteImageAction, replaceImageAction, uploadImageAction } from "@/app/actions";
+import {
+  deleteImageAction,
+  deleteUnusedImagesAction,
+  replaceImageAction,
+  uploadImageAction,
+} from "@/app/actions";
 import { CopyButton } from "@/components/copy-button";
 import { FileSubmitButton } from "@/components/file-submit-button";
 import { SiteHeader } from "@/components/site-header";
@@ -8,7 +13,14 @@ import { list, type ListBlobResultBlob } from "@vercel/blob";
 import Link from "next/link";
 
 type MediaPageProps = {
-  searchParams: Promise<{ url?: string; error?: string; deleted?: string; replaced?: string }>;
+  searchParams: Promise<{
+    url?: string;
+    error?: string;
+    deleted?: string;
+    replaced?: string;
+    cleanupDeleted?: string;
+    cleanupFailed?: string;
+  }>;
 };
 
 type MediaListState = {
@@ -20,9 +32,11 @@ export const dynamic = "force-dynamic";
 
 export default async function MediaPage({ searchParams }: MediaPageProps) {
   await requireAdmin();
-  const { url, error, deleted, replaced } = await searchParams;
+  const { url, error, deleted, replaced, cleanupDeleted, cleanupFailed } = await searchParams;
   const media = await getBlogImages();
   const errorMessage = getErrorMessage(error);
+  const cleanupDeletedCount = Number(cleanupDeleted || 0);
+  const cleanupFailedCount = Number(cleanupFailed || 0);
 
   return (
     <main>
@@ -45,6 +59,13 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {errorMessage ? <p className="text-sm text-red-700">{errorMessage}</p> : null}
           {deleted ? <p className="text-sm text-[#2f6f73]">图片已删除。</p> : null}
           {replaced ? <p className="text-sm text-[#2f6f73]">图片已替换，地址保持不变。</p> : null}
+          {cleanupDeleted !== undefined ? (
+            <p className="text-sm text-[#2f6f73]">
+              已删除 {cleanupDeletedCount} 张未引用图片
+              {cleanupFailedCount ? `，${cleanupFailedCount} 张删除失败` : ""}。
+            </p>
+          ) : null}
+
           {url ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
               <p className="text-sm font-medium text-emerald-900">上传成功</p>
@@ -65,7 +86,16 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
         <section className="mt-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-stone-950">已上传图片</h2>
-            <p className="text-sm text-stone-500">{media.blobs.length} 张图片</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-stone-500">{media.blobs.length} 张图片</p>
+              <form action={deleteUnusedImagesAction}>
+                <SubmitButton
+                  label="删除未引用图片"
+                  pendingLabel="清理中..."
+                  variant="danger"
+                />
+              </form>
+            </div>
           </div>
 
           {media.failed ? (
@@ -189,6 +219,14 @@ function getErrorMessage(error?: string) {
 
   if (error === "delete") {
     return "删除失败，请稍后重试。";
+  }
+
+  if (error === "cleanup-db") {
+    return "数据库暂时不可用，未执行未引用图片清理。";
+  }
+
+  if (error === "cleanup") {
+    return "未引用图片清理失败，请稍后重试。";
   }
 
   if (error === "delete-scope") {
