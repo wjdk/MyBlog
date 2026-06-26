@@ -71,6 +71,7 @@ async function createSchema() {
     CREATE TABLE IF NOT EXISTS comments (
       id SERIAL PRIMARY KEY,
       post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+      parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
       user_id TEXT,
       author TEXT NOT NULL,
       content TEXT NOT NULL,
@@ -80,6 +81,25 @@ async function createSchema() {
   `;
 
   await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS user_id TEXT`;
+  await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER`;
+  await sql`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'comments_parent_id_fkey'
+      ) THEN
+        ALTER TABLE comments
+        ADD CONSTRAINT comments_parent_id_fkey
+        FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE;
+      END IF;
+    END $$;
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS comments_parent_id_idx
+    ON comments (parent_id)
+  `;
 
   await sql`
     CREATE TABLE IF NOT EXISTS sessions (

@@ -126,13 +126,19 @@ export async function addCommentAction(
 ) {
   const user = await requireUser();
   const content = String(formData.get("content") || "").trim();
+  const parentId = Number(formData.get("parentId") || 0);
 
   if (content) {
-    await addComment(postId, user, content.slice(0, 800));
+    await addComment(
+      postId,
+      user,
+      content.slice(0, 800),
+      Number.isSafeInteger(parentId) && parentId > 0 ? parentId : null,
+    );
   }
 
   revalidatePath(postPath(slug));
-  redirect(`${postPath(slug)}#comments`);
+  redirect(`${postPath(slug)}#${parentId > 0 ? `comment-${parentId}` : "comments"}`);
 }
 
 export async function deleteCommentAction(commentId: number) {

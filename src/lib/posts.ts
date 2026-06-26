@@ -20,6 +20,7 @@ export type Post = {
 export type Comment = {
   id: number;
   postId: number;
+  parentId: number | null;
   userId: string | null;
   author: string;
   content: string;
@@ -45,6 +46,7 @@ type PostRow = {
 type CommentRow = {
   id: number;
   post_id: number;
+  parent_id: number | null;
   user_id: string | null;
   author: string;
   username?: string | null;
@@ -96,6 +98,7 @@ function mapComment(row: CommentRow): Comment {
   return {
     id: Number(row.id),
     postId: Number(row.post_id),
+    parentId: row.parent_id ? Number(row.parent_id) : null,
     userId: row.user_id,
     author: row.username || row.author,
     content: row.content,
@@ -281,12 +284,30 @@ export async function addComment(
   postId: number,
   user: { id: string; username: string },
   content: string,
+  parentId?: number | null,
 ) {
   await ensureSchema();
   const sql = getSql();
+  const normalizedParentId = parentId || null;
+
+  if (normalizedParentId) {
+    const parentRows = await sql`
+      SELECT id
+      FROM comments
+      WHERE id = ${normalizedParentId}
+        AND post_id = ${postId}
+        AND status = 'approved'
+      LIMIT 1
+    `;
+
+    if (!parentRows[0]) {
+      return;
+    }
+  }
+
   await sql`
-    INSERT INTO comments (post_id, user_id, author, content, status, created_at)
-    VALUES (${postId}, ${user.id}, ${user.username}, ${content}, 'approved', NOW())
+    INSERT INTO comments (post_id, parent_id, user_id, author, content, status, created_at)
+    VALUES (${postId}, ${normalizedParentId}, ${user.id}, ${user.username}, ${content}, 'approved', NOW())
   `;
 }
 
@@ -303,7 +324,7 @@ export async function listComments(postId: number, includeHidden = false) {
     LEFT JOIN users ON comments.user_id = users.id::text
     WHERE comments.post_id = ${postId}
       AND (${includeHidden}::boolean OR status = 'approved')
-    ORDER BY comments.created_at DESC
+    ORDER BY comments.created_at ASC
   `;
 
   return (rows as CommentRow[]).map(mapComment);

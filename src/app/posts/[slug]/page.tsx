@@ -10,6 +10,7 @@ import {
   incrementViews,
   listComments,
   postPath,
+  type Comment,
 } from "@/lib/posts";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -58,6 +59,7 @@ export default async function PostPage({ params }: PostPageProps) {
     getAdjacentPosts(post),
     getCurrentUser(),
   ]);
+  const commentTree = buildCommentTree(comments);
 
   return (
     <main id="main-content">
@@ -169,18 +171,15 @@ export default async function PostPage({ params }: PostPageProps) {
               </div>
             )}
             <div className="mt-6 space-y-4">
-              {comments.length ? (
-                comments.map((comment) => (
-                  <div
+              {commentTree.length ? (
+                commentTree.map((comment) => (
+                  <CommentThread
                     key={comment.id}
-                    className="rounded-2xl bg-white/75 p-4 shadow-[0_1px_0_rgba(28,25,23,0.08)]"
-                  >
-                    <div className="flex justify-between gap-3 text-sm text-stone-500">
-                      <strong className="text-stone-950">{comment.author}</strong>
-                      <span className="font-mono">{formatDate(comment.createdAt)}</span>
-                    </div>
-                    <p className="mt-3 leading-7 text-stone-700">{comment.content}</p>
-                  </div>
+                    comment={comment}
+                    postId={post.id}
+                    slug={post.slug}
+                    canReply={Boolean(currentUser)}
+                  />
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-stone-300 bg-white/55 p-5 text-stone-600">
@@ -192,6 +191,115 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
       </article>
     </main>
+  );
+}
+
+type CommentNode = Comment & {
+  replies: CommentNode[];
+};
+
+function CommentThread({
+  comment,
+  postId,
+  slug,
+  canReply,
+}: {
+  comment: CommentNode;
+  postId: number;
+  slug: string;
+  canReply: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <article
+        id={`comment-${comment.id}`}
+        className="rounded-2xl bg-white/75 p-4 shadow-[0_1px_0_rgba(28,25,23,0.08)]"
+      >
+        <div className="flex justify-between gap-3 text-sm text-stone-500">
+          <strong className="text-stone-950">{comment.author}</strong>
+          <span className="font-mono">{formatDate(comment.createdAt)}</span>
+        </div>
+        <p className="mt-3 whitespace-pre-wrap break-words leading-7 text-stone-700">
+          {comment.content}
+        </p>
+        <details className="mt-3">
+          <summary className="w-fit cursor-pointer list-none rounded-md px-2 py-1 text-sm font-semibold text-[#2f6f73] transition hover:bg-[#2f6f73]/10">
+            回复
+          </summary>
+          {canReply ? (
+            <form
+              action={addCommentAction.bind(null, postId, slug)}
+              className="mt-3 space-y-3 rounded-xl border border-stone-200 bg-[#fffdf8]/80 p-3"
+            >
+              <input type="hidden" name="parentId" value={comment.id} />
+              <textarea
+                required
+                name="content"
+                rows={3}
+                className="w-full rounded-xl border border-stone-300 bg-white/80 px-3 py-2 outline-none transition focus:border-[#2f6f73]"
+                placeholder={`回复 ${comment.author}`}
+              />
+              <SubmitButton
+                label="发表回复"
+                pendingLabel="发表中..."
+                className="rounded-full bg-stone-950 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#2f6f73] active:translate-y-0 disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-stone-400"
+              />
+            </form>
+          ) : (
+            <div className="mt-3 rounded-xl border border-dashed border-stone-300 bg-white/65 p-3 text-sm text-stone-600">
+              登录后即可回复。
+              <Link
+                href="/login"
+                className="ml-2 font-semibold text-[#2f6f73] transition hover:text-[#24575a]"
+              >
+                去登录
+              </Link>
+            </div>
+          )}
+        </details>
+      </article>
+      {comment.replies.length ? (
+        <div className="ml-4 space-y-3 border-l border-stone-200 pl-4">
+          {comment.replies.map((reply) => (
+            <CommentThread
+              key={reply.id}
+              comment={reply}
+              postId={postId}
+              slug={slug}
+              canReply={canReply}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function buildCommentTree(comments: Comment[]) {
+  const commentsById = new Map<number, CommentNode>();
+  const roots: CommentNode[] = [];
+
+  for (const comment of comments) {
+    commentsById.set(comment.id, { ...comment, replies: [] });
+  }
+
+  for (const comment of comments) {
+    const node = commentsById.get(comment.id);
+    if (!node) {
+      continue;
+    }
+
+    const parent = comment.parentId ? commentsById.get(comment.parentId) : null;
+    if (parent) {
+      parent.replies.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots.sort(
+    (left, right) =>
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
   );
 }
 
