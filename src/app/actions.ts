@@ -154,7 +154,7 @@ export async function importPostsAction(formData: FormData) {
     }
 
     revalidateAll();
-    target = `/admin/import-export?${params.toString()}`;
+    target = "/";
   } catch (error) {
     const message = error instanceof Error ? error.message : "导入失败";
     target = `/admin/import-export?error=${encodeURIComponent(message)}`;
@@ -206,7 +206,7 @@ export async function importPostsWithImagesAction(formData: FormData) {
     }
 
     revalidateAll();
-    target = `/admin/import-export?${params.toString()}`;
+    target = "/";
   } catch (error) {
     const message = error instanceof Error ? error.message : "导入失败";
     target = `/admin/import-export?error=${encodeURIComponent(message)}`;
@@ -262,7 +262,7 @@ export async function localizeExistingPostImagesAction() {
     }
 
     revalidateAll();
-    target = `/admin/import-export?${params.toString()}`;
+    target = "/";
   } catch (error) {
     const message = error instanceof Error ? error.message : "图片同步失败";
     target = `/admin/import-export?error=${encodeURIComponent(message)}`;
