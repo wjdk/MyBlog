@@ -1,5 +1,6 @@
 import { deleteImageAction, replaceImageAction, uploadImageAction } from "@/app/actions";
 import { CopyButton } from "@/components/copy-button";
+import { FileSubmitButton } from "@/components/file-submit-button";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitButton } from "@/components/submit-button";
 import { requireAdmin } from "@/lib/auth";
@@ -53,14 +54,12 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
             </div>
           ) : null}
 
-          <input
-            required
-            type="file"
+          <FileSubmitButton
             name="image"
             accept="image/*"
-            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2"
+            label="上传"
+            pendingLabel="上传中..."
           />
-          <SubmitButton label="上传" pendingLabel="上传中..." />
         </form>
 
         <section className="mt-8">
@@ -132,26 +131,15 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
                           variant="danger"
                         />
                       </form>
-                    </div>
-
-                    <form
-                      action={replaceImageAction.bind(null, blob.pathname)}
-                      className="space-y-2 rounded-md border border-stone-200 bg-stone-50 p-3"
-                    >
-                      <label className="block">
-                        <span className="text-xs font-medium text-stone-600">
-                          替换图片（地址不变）
-                        </span>
-                        <input
-                          required
-                          type="file"
+                      <form action={replaceImageAction.bind(null, blob.pathname)}>
+                        <FileSubmitButton
                           name="image"
                           accept="image/*"
-                          className="mt-2 w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-xs"
+                          label="替换"
+                          pendingLabel="替换中..."
                         />
-                      </label>
-                      <SubmitButton label="替换" pendingLabel="替换中..." />
-                    </form>
+                      </form>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -159,7 +147,9 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           ) : (
             <div className="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-12 text-center">
               <p className="font-medium text-stone-900">暂无图片</p>
-              <p className="mt-2 text-sm text-stone-600">上传第一张图片后会显示在这里。</p>
+              <p className="mt-2 text-sm text-stone-600">
+                上传第一张图片后会显示在这里。
+              </p>
             </div>
           )}
         </section>
