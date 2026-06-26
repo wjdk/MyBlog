@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 池鱼手记
 
-## Getting Started
+一个用 Next.js 搭建的个人博客项目，用来收录开发笔记、学习记录、生活日常和绘画内容。项目包含前台阅读体验、文章归档、标签检索、评论展示，以及一个轻量后台用于管理文章和媒体资源。
 
-First, run the development server:
+## 项目亮点
+
+- 前台首页展示最新文章、站点统计和标签入口。
+- 支持文章详情页、归档页、标签页、搜索页、RSS 和 Sitemap。
+- 后台支持文章创建、编辑、评论管理、媒体上传，以及文章导入导出。
+- 文章内容支持 Markdown 渲染，适合记录长文、代码片段和图文内容。
+- 数据可接入 Neon Postgres，图片资源可接入 Vercel Blob。
+
+## 技术栈
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Neon Postgres
+- Vercel Blob
+
+## 本地运行
+
+安装依赖：
+
+```bash
+npm install
+```
+
+启动开发服务器：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+浏览器打开 [http://localhost:3000](http://localhost:3000) 查看页面。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+常用命令：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+npm run lint
+npm run typecheck
+```
 
-## Learn More
+## 环境变量
 
-To learn more about Next.js, take a look at the following resources:
+本地开发或部署时可按需配置：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+DATABASE_URL=你的 Neon Postgres 连接地址
+BLOB_READ_WRITE_TOKEN=你的 Vercel Blob 读写令牌
+ADMIN_PASSWORD=后台登录密码
+NEXT_PUBLIC_SITE_URL=https://你的站点域名
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+如果不连接线上数据库，项目仍可作为普通 Next.js 应用阅读和开发；正式部署时建议配置完整环境变量。
 
-## Deploy on Vercel
+## 目录结构
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+src/app                 页面、路由和服务端 action
+src/components          复用 UI 组件
+src/lib                 数据、鉴权、文章和媒体处理逻辑
+public                  静态资源
+data                    本地数据相关文件
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 部署
+
+项目适合部署到 Vercel。将仓库导入 Vercel 后，配置 Neon Postgres、Vercel Blob 和上方环境变量即可。更完整的部署步骤见 [DEPLOYMENT.md](./DEPLOYMENT.md)。
+
+## 项目状态
+
+这是一个持续迭代中的个人博客项目。界面和功能会围绕真实写作、归档、图片管理和长期维护体验继续优化。
