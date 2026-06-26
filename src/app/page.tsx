@@ -59,7 +59,7 @@ export default async function Home() {
               <p className="mt-2">去后台创建第一篇，首页会自动更新。</p>
             </div>
           ) : (
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5">
               {posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}

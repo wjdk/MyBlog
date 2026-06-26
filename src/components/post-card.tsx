@@ -5,19 +5,19 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <Link
       href={postPath(post.slug)}
-      className="group block overflow-hidden rounded-[1.25rem] bg-[#fffdf8] shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_0_rgba(47,111,115,0.28),0_24px_60px_rgba(47,111,115,0.14)] active:translate-y-0"
+      className="group block overflow-hidden rounded-[1.25rem] bg-[#fffdf8] shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_0_rgba(47,111,115,0.28),0_24px_60px_rgba(47,111,115,0.14)] active:translate-y-0 md:flex"
     >
       {post.coverImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.coverImage}
-          alt={post.title}
-          className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-        />
-      ) : (
-        <div className="h-3 bg-[linear-gradient(90deg,#2f6f73,#8b735b,#d8c8ac)]" />
-      )}
-      <article className="p-6">
+        <div className="overflow-hidden md:w-72 md:flex-none lg:w-80">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className="h-56 w-full object-cover transition duration-500 group-hover:scale-[1.03] md:h-full"
+          />
+        </div>
+      ) : null}
+      <article className="min-w-0 flex-1 p-6 md:p-7">
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-stone-500">
           <span>{formatDate(post.createdAt)}</span>
           <span>·</span>
