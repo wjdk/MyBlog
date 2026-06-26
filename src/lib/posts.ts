@@ -285,10 +285,12 @@ export async function addComment(
   user: { id: string; username: string },
   content: string,
   parentId?: number | null,
+  submissionKey?: string | null,
 ) {
   await ensureSchema();
   const sql = getSql();
   const normalizedParentId = parentId || null;
+  const normalizedSubmissionKey = submissionKey || null;
 
   if (normalizedParentId) {
     const parentRows = await sql`
@@ -306,8 +308,14 @@ export async function addComment(
   }
 
   await sql`
-    INSERT INTO comments (post_id, parent_id, user_id, author, content, status, created_at)
-    VALUES (${postId}, ${normalizedParentId}, ${user.id}, ${user.username}, ${content}, 'approved', NOW())
+    INSERT INTO comments (
+      post_id, parent_id, user_id, author, content, status, submission_key, created_at
+    )
+    VALUES (
+      ${postId}, ${normalizedParentId}, ${user.id}, ${user.username},
+      ${content}, 'approved', ${normalizedSubmissionKey}, NOW()
+    )
+    ON CONFLICT (submission_key) DO NOTHING
   `;
 }
 

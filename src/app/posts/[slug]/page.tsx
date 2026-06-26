@@ -15,6 +15,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 <p className="text-sm text-stone-500">
                   以 <strong className="text-stone-950">{currentUser.username}</strong> 的身份发表评论
                 </p>
+                <input type="hidden" name="submissionKey" value={randomUUID()} />
                 <textarea
                   required
                   name="content"
@@ -232,6 +234,7 @@ function CommentThread({
               className="mt-3 space-y-3 rounded-xl border border-stone-200 bg-[#fffdf8]/80 p-3"
             >
               <input type="hidden" name="parentId" value={comment.id} />
+              <input type="hidden" name="submissionKey" value={randomUUID()} />
               <textarea
                 required
                 name="content"

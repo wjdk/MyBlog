@@ -76,12 +76,14 @@ async function createSchema() {
       author TEXT NOT NULL,
       content TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'approved',
+      submission_key TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `;
 
   await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS user_id TEXT`;
   await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER`;
+  await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS submission_key TEXT`;
   await sql`
     DO $$
     BEGIN
@@ -99,6 +101,10 @@ async function createSchema() {
   await sql`
     CREATE INDEX IF NOT EXISTS comments_parent_id_idx
     ON comments (parent_id)
+  `;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS comments_submission_key_idx
+    ON comments (submission_key)
   `;
 
   await sql`

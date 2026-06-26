@@ -127,6 +127,7 @@ export async function addCommentAction(
   const user = await requireUser();
   const content = String(formData.get("content") || "").trim();
   const parentId = Number(formData.get("parentId") || 0);
+  const submissionKey = String(formData.get("submissionKey") || "").trim();
 
   if (content) {
     await addComment(
@@ -134,6 +135,7 @@ export async function addCommentAction(
       user,
       content.slice(0, 800),
       Number.isSafeInteger(parentId) && parentId > 0 ? parentId : null,
+      submissionKey || null,
     );
   }
 
