@@ -9,7 +9,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone-900/10 bg-[#fbf8f1]/82 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3">
+      <div className="mx-auto flex min-h-16 max-w-[100rem] flex-wrap items-center justify-between gap-3 px-5 py-3">
         <Link
           href="/"
           className="font-serif text-xl font-semibold tracking-normal text-stone-950 transition hover:text-[#2f6f73]"

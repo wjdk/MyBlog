@@ -12,7 +12,7 @@ export default async function Home() {
     <main id="main-content">
       <SiteHeader />
       <section className="border-b border-stone-900/10">
-        <div className="mx-auto grid max-w-6xl gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">
+        <div className="mx-auto grid max-w-[100rem] gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">
           <div className="min-w-0 max-w-[20rem] sm:max-w-none">
             <p className="text-sm font-semibold tracking-[0.28em] text-[#2f6f73]">
               CHIYU JOURNAL
@@ -45,7 +45,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1fr_300px]">
+      <section className="mx-auto grid max-w-[100rem] gap-10 px-5 py-14 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="mb-7 flex items-end justify-between">
             <div>
