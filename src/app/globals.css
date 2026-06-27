@@ -108,6 +108,17 @@ p {
     sans-serif;
 }
 
+.font-caoshu {
+  font-family:
+    "FZShuTi",
+    "STXingkai",
+    "Xingkai SC",
+    "HanziPen SC",
+    "Kaiti SC",
+    "KaiTi",
+    cursive;
+}
+
 @media (max-width: 640px) {
   h1,
   h2,

@@ -12,7 +12,7 @@ export async function SiteHeader() {
       <div className="mx-auto flex min-h-16 max-w-[100rem] flex-wrap items-center justify-between gap-3 px-5 py-3">
         <Link
           href="/"
-          className="font-serif text-xl font-semibold tracking-normal text-stone-950 transition hover:text-[#2f6f73]"
+          className="font-caoshu text-2xl font-semibold tracking-normal text-stone-950 transition hover:text-[#2f6f73]"
         >
           池鱼<span className="text-[#2f6f73]">手记</span>
         </Link>
