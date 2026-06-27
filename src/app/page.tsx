@@ -14,7 +14,7 @@ export default async function Home() {
       <section className="border-b border-stone-900/10">
         <div className="mx-auto grid max-w-[100rem] gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">
           <div className="min-w-0 max-w-[20rem] sm:max-w-none">
-            <p className="text-sm font-semibold tracking-[0.28em] text-[#2f6f73]">
+            <p className="font-blackletter text-base font-semibold tracking-[0.18em] text-[#2f6f73] sm:text-lg">
               CHIYU JOURNAL
             </p>
             <p className="mt-6 max-w-[20rem] text-base leading-8 text-stone-600 sm:max-w-full sm:text-lg sm:text-pretty lg:max-w-2xl">
