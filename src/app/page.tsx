@@ -18,7 +18,7 @@ export default async function Home() {
               CHIYU JOURNAL
             </p>
             <p className="mt-6 max-w-[20rem] text-base leading-8 text-stone-600 sm:max-w-full sm:text-lg sm:text-pretty lg:max-w-2xl">
-              收录项目开发笔记，学习笔记，生活日常和绘画记录。
+              收录项目开发笔记，学习笔记，技术笔记和生活日常。
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link

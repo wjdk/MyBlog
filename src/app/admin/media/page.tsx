@@ -2,6 +2,8 @@ import {
   deleteAudioAction,
   deleteImageAction,
   deleteUnusedImagesAction,
+  renameAudioAction,
+  renameImageAction,
   replaceAudioAction,
   replaceImageAction,
   uploadAudioAction,
@@ -23,6 +25,8 @@ type MediaPageProps = {
     audioDeleted?: string;
     replaced?: string;
     audioReplaced?: string;
+    renamed?: string;
+    audioRenamed?: string;
     cleanupDeleted?: string;
     cleanupFailed?: string;
     audioUrl?: string;
@@ -46,6 +50,8 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
     audioDeleted,
     replaced,
     audioReplaced,
+    renamed,
+    audioRenamed,
     cleanupDeleted,
     cleanupFailed,
     audioUrl,
@@ -76,6 +82,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {errorMessage && !isAudioError(error) ? <p className="text-sm text-red-700">{errorMessage}</p> : null}
           {deleted ? <p className="text-sm text-[#2f6f73]">图片已删除。</p> : null}
           {replaced ? <p className="text-sm text-[#2f6f73]">图片已替换，地址保持不变。</p> : null}
+          {renamed ? <p className="text-sm text-[#2f6f73]">图片已重命名，文章引用已同步更新。</p> : null}
           {cleanupDeleted !== undefined ? (
             <p className="text-sm text-[#2f6f73]">
               已删除 {cleanupDeletedCount} 张未引用图片
@@ -111,6 +118,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {errorMessage && isAudioError(error) ? <p className="text-sm text-red-700">{errorMessage}</p> : null}
           {audioDeleted ? <p className="text-sm text-[#2f6f73]">音频已删除。</p> : null}
           {audioReplaced ? <p className="text-sm text-[#2f6f73]">音频已替换，地址保持不变。</p> : null}
+          {audioRenamed ? <p className="text-sm text-[#2f6f73]">音频已重命名，文章引用已同步更新。</p> : null}
 
           {audioUrl ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
@@ -195,6 +203,20 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
                       {blob.url}
                     </code>
 
+                    <form
+                      action={renameImageAction.bind(null, blob.pathname, blob.url)}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        name="name"
+                        defaultValue={getFileBaseName(blob.pathname)}
+                        className="min-w-0 flex-1 rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-900 outline-none focus:border-[#2f6f73]"
+                        aria-label="图片新文件名"
+                      />
+                      <SubmitButton label="重命名" pendingLabel="重命名中..." />
+                    </form>
+
                     <div className="flex flex-wrap items-center gap-2">
                       <a
                         href={blob.url}
@@ -273,6 +295,20 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
                     <code className="block max-h-24 overflow-auto break-all rounded-md bg-stone-100 px-3 py-2 text-xs text-stone-700">
                       {toAudioMarkdown(blob.url, getFileName(blob.pathname))}
                     </code>
+
+                    <form
+                      action={renameAudioAction.bind(null, blob.pathname, blob.url)}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        name="name"
+                        defaultValue={getFileBaseName(blob.pathname)}
+                        className="min-w-0 flex-1 rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-900 outline-none focus:border-[#2f6f73]"
+                        aria-label="音频新文件名"
+                      />
+                      <SubmitButton label="重命名" pendingLabel="重命名中..." />
+                    </form>
 
                     <div className="flex flex-wrap items-center gap-2">
                       <a
@@ -364,6 +400,14 @@ function getErrorMessage(error?: string) {
     return "音频替换失败，请检查文件大小或稍后重试。";
   }
 
+  if (error === "audio-rename-file") {
+    return "请输入新的音频文件名。";
+  }
+
+  if (error === "audio-rename" || error === "audio-rename-scope") {
+    return "音频重命名失败，请检查文件名是否已存在或稍后重试。";
+  }
+
   if (error === "upload") {
     return "上传失败，请检查图片大小或稍后重试。";
   }
@@ -396,6 +440,14 @@ function getErrorMessage(error?: string) {
     return "替换失败，请检查图片大小或稍后重试。";
   }
 
+  if (error === "rename-file") {
+    return "请输入新的图片文件名。";
+  }
+
+  if (error === "rename" || error === "rename-scope") {
+    return "图片重命名失败，请检查文件名是否已存在或稍后重试。";
+  }
+
   if (error) {
     return "请选择一张图片。";
   }
@@ -421,6 +473,10 @@ function isAudioPath(pathname: string) {
 
 function getFileName(pathname: string) {
   return pathname.split("/").pop() || pathname;
+}
+
+function getFileBaseName(pathname: string) {
+  return getFileName(pathname).replace(/\.[^.]+$/, "");
 }
 
 function formatBytes(size: number) {

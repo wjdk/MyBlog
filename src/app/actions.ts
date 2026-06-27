@@ -26,7 +26,7 @@ import {
   requireUser,
   setUserSession,
 } from "@/lib/auth";
-import { del, list, put, type ListBlobResultBlob } from "@vercel/blob";
+import { copy, del, list, put, type ListBlobResultBlob } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -358,6 +358,42 @@ export async function replaceImageAction(pathname: string, formData: FormData) {
   redirect(`/admin/media?replaced=1&url=${encodeURIComponent(blob.url)}`);
 }
 
+export async function renameImageAction(pathname: string, currentUrl: string, formData: FormData) {
+  await requireAdmin();
+
+  if (!pathname.startsWith("blog/") || !isImagePath(pathname)) {
+    redirect("/admin/media?error=rename-scope");
+  }
+
+  const nextPathname = buildRenamedPath(pathname, formData);
+
+  if (!nextPathname || !isImagePath(nextPathname)) {
+    redirect("/admin/media?error=rename-file");
+  }
+
+  if (nextPathname === pathname) {
+    redirect("/admin/media?renamed=1");
+  }
+
+  let blob: Awaited<ReturnType<typeof copy>>;
+
+  try {
+    blob = await copy(pathname, nextPathname, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: false,
+    });
+    await del(pathname);
+    await replaceMediaReferences(pathname, currentUrl, blob.pathname, blob.url);
+  } catch {
+    redirect("/admin/media?error=rename");
+  }
+
+  revalidatePath("/admin/media");
+  revalidateAll();
+  redirect(`/admin/media?renamed=1&url=${encodeURIComponent(blob.url)}`);
+}
+
 export async function deleteImageAction(pathname: string) {
   await requireAdmin();
 
@@ -427,6 +463,42 @@ export async function replaceAudioAction(pathname: string, formData: FormData) {
 
   revalidatePath("/admin/media");
   redirect(`/admin/media?audioReplaced=1&audioUrl=${encodeURIComponent(blob.url)}`);
+}
+
+export async function renameAudioAction(pathname: string, currentUrl: string, formData: FormData) {
+  await requireAdmin();
+
+  if (!isAudioPath(pathname)) {
+    redirect("/admin/media?error=audio-rename-scope");
+  }
+
+  const nextPathname = buildRenamedPath(pathname, formData);
+
+  if (!nextPathname || !isAudioPath(nextPathname)) {
+    redirect("/admin/media?error=audio-rename-file");
+  }
+
+  if (nextPathname === pathname) {
+    redirect("/admin/media?audioRenamed=1");
+  }
+
+  let blob: Awaited<ReturnType<typeof copy>>;
+
+  try {
+    blob = await copy(pathname, nextPathname, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: false,
+    });
+    await del(pathname);
+    await replaceMediaReferences(pathname, currentUrl, blob.pathname, blob.url);
+  } catch {
+    redirect("/admin/media?error=audio-rename");
+  }
+
+  revalidatePath("/admin/media");
+  revalidateAll();
+  redirect(`/admin/media?audioRenamed=1&audioUrl=${encodeURIComponent(blob.url)}`);
 }
 
 export async function deleteAudioAction(pathname: string) {
@@ -510,6 +582,60 @@ function isBlobReferenced(blob: ListBlobResultBlob, references: string[]) {
   });
 }
 
+async function replaceMediaReferences(
+  oldPathname: string,
+  oldUrl: string,
+  nextPathname: string,
+  nextUrl: string,
+) {
+  if (!hasDatabase()) {
+    return;
+  }
+
+  const posts = await listPosts({ includeDrafts: true, limit: 1000 });
+
+  for (const post of posts) {
+    const nextContent = replaceMediaValue(post.content, oldPathname, oldUrl, nextPathname, nextUrl);
+    const nextCoverImage = replaceMediaValue(
+      post.coverImage,
+      oldPathname,
+      oldUrl,
+      nextPathname,
+      nextUrl,
+    );
+
+    if (nextContent !== post.content || nextCoverImage !== post.coverImage) {
+      await updatePost(post.id, {
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: nextContent,
+        status: post.status,
+        tags: post.tags,
+        coverImage: nextCoverImage,
+      });
+
+      if (post.status === "published") {
+        revalidatePath(postPath(post.slug));
+      }
+    }
+  }
+}
+
+function replaceMediaValue(
+  value: string,
+  oldPathname: string,
+  oldUrl: string,
+  nextPathname: string,
+  nextUrl: string,
+) {
+  if (!value) {
+    return value;
+  }
+
+  return value.split(oldUrl).join(nextUrl).split(oldPathname).join(nextPathname);
+}
+
 function isImageFile(file: File) {
   return file.type.startsWith("image/") || isImagePath(file.name);
 }
@@ -528,6 +654,38 @@ function isAudioPath(pathname: string) {
 
 function hasAudioExtension(pathname: string) {
   return /\.(aac|flac|m4a|mp3|oga|ogg|wav|webm)(?:[?#].*)?$/i.test(pathname);
+}
+
+function buildRenamedPath(pathname: string, formData: FormData) {
+  const nextName = String(formData.get("name") || "").trim();
+  const extension = getPathExtension(pathname);
+  const baseName = safeMediaBaseName(nextName.replace(/\.[^.]+$/, ""));
+
+  if (!baseName || !extension) {
+    return "";
+  }
+
+  return `${getPathDirectory(pathname)}${baseName}${extension}`;
+}
+
+function getPathDirectory(pathname: string) {
+  const slashIndex = pathname.lastIndexOf("/");
+  return slashIndex >= 0 ? pathname.slice(0, slashIndex + 1) : "";
+}
+
+function getPathExtension(pathname: string) {
+  return pathname.match(/\.[a-z0-9]+$/i)?.[0].toLowerCase() || "";
+}
+
+function safeMediaBaseName(value: string) {
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}._-]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 100) || ""
+  );
 }
 
 function revalidateAll() {
