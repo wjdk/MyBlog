@@ -308,7 +308,7 @@ export async function uploadImageAction(formData: FormData) {
   await requireAdmin();
   const file = formData.get("image");
 
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File) || file.size === 0 || !isImageFile(file)) {
     redirect("/admin/media?error=1");
   }
 
@@ -318,6 +318,7 @@ export async function uploadImageAction(formData: FormData) {
   try {
     blob = await put(`blog/${Date.now()}-${safeName}`, file, {
       access: "public",
+      contentType: file.type || undefined,
     });
   } catch {
     redirect("/admin/media?error=upload");
@@ -329,13 +330,13 @@ export async function uploadImageAction(formData: FormData) {
 export async function replaceImageAction(pathname: string, formData: FormData) {
   await requireAdmin();
 
-  if (!pathname.startsWith("blog/")) {
+  if (!pathname.startsWith("blog/") || !isImagePath(pathname)) {
     redirect("/admin/media?error=replace-scope");
   }
 
   const file = formData.get("image");
 
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File) || file.size === 0 || !isImageFile(file)) {
     redirect("/admin/media?error=replace-file");
   }
 
@@ -360,7 +361,7 @@ export async function replaceImageAction(pathname: string, formData: FormData) {
 export async function deleteImageAction(pathname: string) {
   await requireAdmin();
 
-  if (!pathname.startsWith("blog/")) {
+  if (!pathname.startsWith("blog/") || !isImagePath(pathname)) {
     redirect("/admin/media?error=delete-scope");
   }
 
@@ -372,6 +373,77 @@ export async function deleteImageAction(pathname: string) {
 
   revalidatePath("/admin/media");
   redirect("/admin/media?deleted=1");
+}
+
+export async function uploadAudioAction(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("audio");
+
+  if (!(file instanceof File) || file.size === 0 || !isAudioFile(file)) {
+    redirect("/admin/media?error=audio-file");
+  }
+
+  const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
+  let blob: Awaited<ReturnType<typeof put>>;
+
+  try {
+    blob = await put(`blog/audio/${Date.now()}-${safeName}`, file, {
+      access: "public",
+      contentType: file.type || undefined,
+    });
+  } catch {
+    redirect("/admin/media?error=audio-upload");
+  }
+
+  redirect(`/admin/media?audioUrl=${encodeURIComponent(blob.url)}`);
+}
+
+export async function replaceAudioAction(pathname: string, formData: FormData) {
+  await requireAdmin();
+
+  if (!isAudioPath(pathname)) {
+    redirect("/admin/media?error=audio-replace-scope");
+  }
+
+  const file = formData.get("audio");
+
+  if (!(file instanceof File) || file.size === 0 || !isAudioFile(file)) {
+    redirect("/admin/media?error=audio-replace-file");
+  }
+
+  let blob: Awaited<ReturnType<typeof put>>;
+
+  try {
+    blob = await put(pathname, file, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 60,
+      contentType: file.type || undefined,
+    });
+  } catch {
+    redirect("/admin/media?error=audio-replace");
+  }
+
+  revalidatePath("/admin/media");
+  redirect(`/admin/media?audioReplaced=1&audioUrl=${encodeURIComponent(blob.url)}`);
+}
+
+export async function deleteAudioAction(pathname: string) {
+  await requireAdmin();
+
+  if (!isAudioPath(pathname)) {
+    redirect("/admin/media?error=audio-delete-scope");
+  }
+
+  try {
+    await del(pathname);
+  } catch {
+    redirect("/admin/media?error=audio-delete");
+  }
+
+  revalidatePath("/admin/media");
+  redirect("/admin/media?audioDeleted=1");
 }
 
 export async function deleteUnusedImagesAction() {
@@ -425,7 +497,7 @@ async function listBlogImageBlobs() {
     hasMore = page.hasMore;
   }
 
-  return blobs;
+  return blobs.filter((blob) => isImagePath(blob.pathname));
 }
 
 function isBlobReferenced(blob: ListBlobResultBlob, references: string[]) {
@@ -436,6 +508,26 @@ function isBlobReferenced(blob: ListBlobResultBlob, references: string[]) {
 
     return reference.includes(blob.url) || reference.includes(blob.pathname);
   });
+}
+
+function isImageFile(file: File) {
+  return file.type.startsWith("image/") || isImagePath(file.name);
+}
+
+function isAudioFile(file: File) {
+  return file.type.startsWith("audio/") || hasAudioExtension(file.name);
+}
+
+function isImagePath(pathname: string) {
+  return /\.(avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(pathname);
+}
+
+function isAudioPath(pathname: string) {
+  return /^blog\/audio\//.test(pathname) && hasAudioExtension(pathname);
+}
+
+function hasAudioExtension(pathname: string) {
+  return /\.(aac|flac|m4a|mp3|oga|ogg|wav|webm)(?:[?#].*)?$/i.test(pathname);
 }
 
 function revalidateAll() {
