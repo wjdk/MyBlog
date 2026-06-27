@@ -13,8 +13,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-sans: Consolas, "Noto Sans SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Consolas, "Noto Sans SC", "Microsoft YaHei", ui-serif, Georgia, serif;
+  --font-mono: Consolas, "Noto Sans Mono", ui-monospace, monospace;
 }
 
 body {
@@ -26,7 +27,7 @@ body {
     linear-gradient(180deg, #fbf8f1 0%, var(--background) 42%, #eee8dd 100%);
   color: var(--foreground);
   font-family:
-    "Geist",
+    Consolas,
     "Noto Sans SC",
     "Microsoft YaHei",
     ui-sans-serif,
@@ -63,6 +64,26 @@ h2,
 h3,
 p {
   overflow-wrap: anywhere;
+}
+
+.markdown-body {
+  font-family:
+    "Geist",
+    "Noto Sans SC",
+    "Microsoft YaHei",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.markdown-body .font-serif {
+  font-family: "Geist", "Noto Sans SC", "Microsoft YaHei", ui-serif, Georgia, serif;
+}
+
+.markdown-body .font-mono,
+.markdown-body code,
+.markdown-body pre {
+  font-family: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
 @media (max-width: 640px) {

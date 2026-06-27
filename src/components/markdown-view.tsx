@@ -250,7 +250,7 @@ export function MarkdownView({ content }: { content: string }) {
   flushList();
   flushCode();
 
-  return <div className="space-y-7 text-lg text-stone-800">{blocks}</div>;
+  return <div className="markdown-body space-y-7 text-lg text-stone-800">{blocks}</div>;
 }
 
 function renderInline(text: string, keyPrefix: string) {
