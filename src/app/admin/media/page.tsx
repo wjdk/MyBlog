@@ -20,6 +20,7 @@ import Link from "next/link";
 type MediaPageProps = {
   searchParams: Promise<{
     url?: string;
+    uploadRenamed?: string;
     error?: string;
     deleted?: string;
     audioDeleted?: string;
@@ -27,6 +28,9 @@ type MediaPageProps = {
     audioReplaced?: string;
     renamed?: string;
     audioRenamed?: string;
+    renameAdjusted?: string;
+    audioRenameAdjusted?: string;
+    audioUploadRenamed?: string;
     cleanupDeleted?: string;
     cleanupFailed?: string;
     audioUrl?: string;
@@ -45,6 +49,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
   await requireAdmin();
   const {
     url,
+    uploadRenamed,
     error,
     deleted,
     audioDeleted,
@@ -52,6 +57,9 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
     audioReplaced,
     renamed,
     audioRenamed,
+    renameAdjusted,
+    audioRenameAdjusted,
+    audioUploadRenamed,
     cleanupDeleted,
     cleanupFailed,
     audioUrl,
@@ -83,6 +91,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {deleted ? <p className="text-sm text-[#2f6f73]">图片已删除。</p> : null}
           {replaced ? <p className="text-sm text-[#2f6f73]">图片已替换，地址保持不变。</p> : null}
           {renamed ? <p className="text-sm text-[#2f6f73]">图片已重命名，文章引用已同步更新。</p> : null}
+          {renameAdjusted ? <p className="text-sm text-[#2f6f73]">目标文件名已存在，已自动改为可用名称。</p> : null}
           {cleanupDeleted !== undefined ? (
             <p className="text-sm text-[#2f6f73]">
               已删除 {cleanupDeletedCount} 张未引用图片
@@ -93,6 +102,9 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {url ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
               <p className="text-sm font-medium text-emerald-900">上传成功</p>
+              {uploadRenamed ? (
+                <p className="mt-1 text-sm text-emerald-800">存在同名文件，已自动改名后上传。</p>
+              ) : null}
               <code className="mt-2 block break-all rounded bg-white/80 px-3 py-2 text-sm text-emerald-950">
                 {url}
               </code>
@@ -119,10 +131,14 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
           {audioDeleted ? <p className="text-sm text-[#2f6f73]">音频已删除。</p> : null}
           {audioReplaced ? <p className="text-sm text-[#2f6f73]">音频已替换，地址保持不变。</p> : null}
           {audioRenamed ? <p className="text-sm text-[#2f6f73]">音频已重命名，文章引用已同步更新。</p> : null}
+          {audioRenameAdjusted ? <p className="text-sm text-[#2f6f73]">目标文件名已存在，已自动改为可用名称。</p> : null}
 
           {audioUrl ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
               <p className="text-sm font-medium text-emerald-900">音频上传成功</p>
+              {audioUploadRenamed ? (
+                <p className="mt-1 text-sm text-emerald-800">存在同名文件，已自动改名后上传。</p>
+              ) : null}
               <code className="mt-2 block break-all rounded bg-white/80 px-3 py-2 text-sm text-emerald-950">
                 {audioUrl}
               </code>

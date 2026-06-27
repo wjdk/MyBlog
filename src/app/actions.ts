@@ -312,11 +312,15 @@ export async function uploadImageAction(formData: FormData) {
     redirect("/admin/media?error=1");
   }
 
-  const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
+  const uploadPath = await buildAvailableUploadPath("blog/", file, "image");
+  if (!isImagePath(uploadPath.pathname)) {
+    redirect("/admin/media?error=1");
+  }
+
   let blob: Awaited<ReturnType<typeof put>>;
 
   try {
-    blob = await put(`blog/${Date.now()}-${safeName}`, file, {
+    blob = await put(uploadPath.pathname, file, {
       access: "public",
       contentType: file.type || undefined,
     });
@@ -324,7 +328,12 @@ export async function uploadImageAction(formData: FormData) {
     redirect("/admin/media?error=upload");
   }
 
-  redirect(`/admin/media?url=${encodeURIComponent(blob.url)}`);
+  const params = new URLSearchParams({ url: blob.url });
+  if (uploadPath.renamed) {
+    params.set("uploadRenamed", "1");
+  }
+
+  redirect(`/admin/media?${params.toString()}`);
 }
 
 export async function replaceImageAction(pathname: string, formData: FormData) {
@@ -365,20 +374,22 @@ export async function renameImageAction(pathname: string, currentUrl: string, fo
     redirect("/admin/media?error=rename-scope");
   }
 
-  const nextPathname = buildRenamedPath(pathname, formData);
+  const desiredPathname = buildRenamedPath(pathname, formData);
 
-  if (!nextPathname || !isImagePath(nextPathname)) {
+  if (!desiredPathname || !isImagePath(desiredPathname)) {
     redirect("/admin/media?error=rename-file");
   }
 
-  if (nextPathname === pathname) {
+  if (desiredPathname === pathname) {
     redirect("/admin/media?renamed=1");
   }
+
+  const renamePath = await resolveAvailablePath(desiredPathname);
 
   let blob: Awaited<ReturnType<typeof copy>>;
 
   try {
-    blob = await copy(pathname, nextPathname, {
+    blob = await copy(pathname, renamePath.pathname, {
       access: "public",
       addRandomSuffix: false,
       allowOverwrite: false,
@@ -391,7 +402,12 @@ export async function renameImageAction(pathname: string, currentUrl: string, fo
 
   revalidatePath("/admin/media");
   revalidateAll();
-  redirect(`/admin/media?renamed=1&url=${encodeURIComponent(blob.url)}`);
+  const params = new URLSearchParams({ renamed: "1", url: blob.url });
+  if (renamePath.renamed) {
+    params.set("renameAdjusted", "1");
+  }
+
+  redirect(`/admin/media?${params.toString()}`);
 }
 
 export async function deleteImageAction(pathname: string) {
@@ -419,11 +435,15 @@ export async function uploadAudioAction(formData: FormData) {
     redirect("/admin/media?error=audio-file");
   }
 
-  const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
+  const uploadPath = await buildAvailableUploadPath("blog/audio/", file, "audio");
+  if (!isAudioPath(uploadPath.pathname)) {
+    redirect("/admin/media?error=audio-file");
+  }
+
   let blob: Awaited<ReturnType<typeof put>>;
 
   try {
-    blob = await put(`blog/audio/${Date.now()}-${safeName}`, file, {
+    blob = await put(uploadPath.pathname, file, {
       access: "public",
       contentType: file.type || undefined,
     });
@@ -431,7 +451,12 @@ export async function uploadAudioAction(formData: FormData) {
     redirect("/admin/media?error=audio-upload");
   }
 
-  redirect(`/admin/media?audioUrl=${encodeURIComponent(blob.url)}`);
+  const params = new URLSearchParams({ audioUrl: blob.url });
+  if (uploadPath.renamed) {
+    params.set("audioUploadRenamed", "1");
+  }
+
+  redirect(`/admin/media?${params.toString()}`);
 }
 
 export async function replaceAudioAction(pathname: string, formData: FormData) {
@@ -472,20 +497,22 @@ export async function renameAudioAction(pathname: string, currentUrl: string, fo
     redirect("/admin/media?error=audio-rename-scope");
   }
 
-  const nextPathname = buildRenamedPath(pathname, formData);
+  const desiredPathname = buildRenamedPath(pathname, formData);
 
-  if (!nextPathname || !isAudioPath(nextPathname)) {
+  if (!desiredPathname || !isAudioPath(desiredPathname)) {
     redirect("/admin/media?error=audio-rename-file");
   }
 
-  if (nextPathname === pathname) {
+  if (desiredPathname === pathname) {
     redirect("/admin/media?audioRenamed=1");
   }
+
+  const renamePath = await resolveAvailablePath(desiredPathname);
 
   let blob: Awaited<ReturnType<typeof copy>>;
 
   try {
-    blob = await copy(pathname, nextPathname, {
+    blob = await copy(pathname, renamePath.pathname, {
       access: "public",
       addRandomSuffix: false,
       allowOverwrite: false,
@@ -498,7 +525,12 @@ export async function renameAudioAction(pathname: string, currentUrl: string, fo
 
   revalidatePath("/admin/media");
   revalidateAll();
-  redirect(`/admin/media?audioRenamed=1&audioUrl=${encodeURIComponent(blob.url)}`);
+  const params = new URLSearchParams({ audioRenamed: "1", audioUrl: blob.url });
+  if (renamePath.renamed) {
+    params.set("audioRenameAdjusted", "1");
+  }
+
+  redirect(`/admin/media?${params.toString()}`);
 }
 
 export async function deleteAudioAction(pathname: string) {
@@ -656,6 +688,42 @@ function hasAudioExtension(pathname: string) {
   return /\.(aac|flac|m4a|mp3|oga|ogg|wav|webm)(?:[?#].*)?$/i.test(pathname);
 }
 
+async function buildAvailableUploadPath(directory: string, file: File, fallbackName: string) {
+  const extension = getUploadExtension(file);
+  const baseName = safeMediaBaseName(file.name.replace(/\.[^.]+$/, "") || fallbackName);
+  const desiredPathname = `${directory}${baseName || fallbackName}${extension}`;
+
+  return resolveAvailablePath(desiredPathname);
+}
+
+async function resolveAvailablePath(desiredPathname: string) {
+  if (!(await blobPathExists(desiredPathname))) {
+    return { pathname: desiredPathname, renamed: false };
+  }
+
+  const directory = getPathDirectory(desiredPathname);
+  const extension = getPathExtension(desiredPathname);
+  const baseName = desiredPathname.slice(directory.length, desiredPathname.length - extension.length);
+
+  for (let index = 2; index < 1000; index += 1) {
+    const candidate = `${directory}${baseName}-${index}${extension}`;
+
+    if (!(await blobPathExists(candidate))) {
+      return { pathname: candidate, renamed: true };
+    }
+  }
+
+  return {
+    pathname: `${directory}${baseName}-${Date.now()}${extension}`,
+    renamed: true,
+  };
+}
+
+async function blobPathExists(pathname: string) {
+  const page = await list({ prefix: pathname, limit: 1000 });
+  return page.blobs.some((blob) => blob.pathname === pathname);
+}
+
 function buildRenamedPath(pathname: string, formData: FormData) {
   const nextName = String(formData.get("name") || "").trim();
   const extension = getPathExtension(pathname);
@@ -675,6 +743,39 @@ function getPathDirectory(pathname: string) {
 
 function getPathExtension(pathname: string) {
   return pathname.match(/\.[a-z0-9]+$/i)?.[0].toLowerCase() || "";
+}
+
+function getUploadExtension(file: File) {
+  const extension = getPathExtension(file.name);
+
+  if (extension) {
+    return extension;
+  }
+
+  return extensionFromContentType(file.type);
+}
+
+function extensionFromContentType(contentType: string) {
+  const type = contentType.split(";")[0].trim().toLowerCase();
+
+  if (type === "image/jpeg") {
+    return ".jpg";
+  }
+
+  if (type === "image/svg+xml") {
+    return ".svg";
+  }
+
+  if (type === "audio/mpeg") {
+    return ".mp3";
+  }
+
+  if (type === "audio/mp4" || type === "audio/x-m4a") {
+    return ".m4a";
+  }
+
+  const subtype = type.split("/")[1];
+  return subtype ? `.${subtype.replace(/[^a-z0-9]+/g, "-")}` : "";
 }
 
 function safeMediaBaseName(value: string) {

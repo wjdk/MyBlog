@@ -328,7 +328,7 @@ function AudioBlock({ src, title }: { src: string; title?: string }) {
   return (
     <figure className="rounded-2xl border border-stone-200 bg-white/85 p-4 shadow-[0_14px_35px_rgba(28,25,23,0.08)]">
       {title ? <figcaption className="mb-3 text-sm font-medium text-stone-700">{title}</figcaption> : null}
-      <audio className="w-full" controls preload="metadata" autoPlay>
+      <audio className="w-full" controls preload="metadata">
         <source src={src} />
       </audio>
     </figure>
