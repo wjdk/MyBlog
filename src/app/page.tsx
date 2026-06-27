@@ -9,7 +9,7 @@ export default async function Home() {
   const [posts, tags] = await Promise.all([listPosts(), listTags()]);
 
   return (
-    <main id="main-content">
+    <main id="main-content" className="home-yanti">
       <SiteHeader />
       <section className="border-b border-stone-900/10">
         <div className="mx-auto grid max-w-[100rem] gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">

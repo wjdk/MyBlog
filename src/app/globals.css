@@ -95,6 +95,19 @@ p {
     fantasy;
 }
 
+.home-yanti {
+  font-family:
+    Consolas,
+    "FZYanSongS-B-GB",
+    "FZYanTi",
+    "FZYaoti",
+    "STKaiti",
+    "KaiTi",
+    "Kaiti SC",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
 @media (max-width: 640px) {
   h1,
   h2,
