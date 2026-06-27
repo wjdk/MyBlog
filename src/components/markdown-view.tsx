@@ -113,6 +113,13 @@ export function MarkdownView({ content }: { content: string }) {
       continue;
     }
 
+    const audioBlock = parseAudioBlock(blockLine);
+    if (audioBlock) {
+      flushList();
+      blocks.push(<AudioBlock key={`audio-${blocks.length}`} src={audioBlock.src} title={audioBlock.title} />);
+      continue;
+    }
+
     if (isTableRow(line) && index + 1 < lines.length && isTableRow(lines[index + 1])) {
       flushList();
       const nextIndex = pushTable(index);
@@ -315,6 +322,53 @@ function renderInline(text: string, keyPrefix: string) {
   }
 
   return nodes.length ? nodes : text;
+}
+
+function AudioBlock({ src, title }: { src: string; title?: string }) {
+  return (
+    <figure className="rounded-2xl border border-stone-200 bg-white/85 p-4 shadow-[0_14px_35px_rgba(28,25,23,0.08)]">
+      {title ? <figcaption className="mb-3 text-sm font-medium text-stone-700">{title}</figcaption> : null}
+      <audio className="w-full" controls preload="metadata" autoPlay>
+        <source src={src} />
+      </audio>
+    </figure>
+  );
+}
+
+function parseAudioBlock(line: string) {
+  const value = line.trim();
+  const audioDirective = value.match(/^@\[audio(?::\s*([^\]]+))?]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)$/i);
+  const audioLink = value.match(/^\[audio(?::\s*([^\]]+))?]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)$/i);
+  const match = audioDirective ?? audioLink;
+
+  if (match) {
+    const src = safeUrl(match[2]);
+
+    if (src === "#") {
+      return null;
+    }
+
+    return {
+      src,
+      title: match[1]?.trim(),
+    };
+  }
+
+  if (isAudioUrl(value)) {
+    const src = safeUrl(value);
+
+    if (src === "#") {
+      return null;
+    }
+
+    return { src };
+  }
+
+  return null;
+}
+
+function isAudioUrl(url: string) {
+  return /\.(mp3|wav|ogg|oga|m4a|aac|flac|webm)(?:[?#].*)?$/i.test(url.trim());
 }
 
 function safeUrl(url: string) {

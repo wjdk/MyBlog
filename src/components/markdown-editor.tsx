@@ -180,6 +180,11 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
             title="图片"
             onClick={() => wrapSelection("![", "](https://example.com/image.jpg)", "图片说明")}
           />
+          <ToolButton
+            label="Audio"
+            title="Audio"
+            onClick={() => insertBlock("@[audio: Title](https://example.com/audio.mp3)")}
+          />
           <ToolButton label="</>" title="代码块" onClick={() => wrapSelection("```\n", "\n```", "code")} />
           <ToolButton label="格式化" title="格式化 Markdown" onClick={formatMarkdown} />
         </div>
