@@ -99,7 +99,6 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
             pendingLabel="上传中..."
             variant="dropzone"
             dropLabel="拖拽图片到此处上传"
-            dropHint="支持点击选择或拖入图片文件"
           />
         </form>
 
@@ -132,7 +131,6 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
             pendingLabel="上传中..."
             variant="dropzone"
             dropLabel="拖拽音频到此处上传"
-            dropHint="支持点击选择或拖入音频文件"
           />
         </form>
 
