@@ -4,9 +4,10 @@ import { useState, useTransition } from "react";
 
 type CopyButtonProps = {
   value: string;
+  label?: string;
 };
 
-export function CopyButton({ value }: CopyButtonProps) {
+export function CopyButton({ value, label = "复制地址" }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -25,7 +26,7 @@ export function CopyButton({ value }: CopyButtonProps) {
       disabled={isPending}
       className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-800 hover:border-stone-400 disabled:cursor-not-allowed disabled:text-stone-400"
     >
-      {copied ? "已复制" : "复制地址"}
+      {copied ? "已复制" : label}
     </button>
   );
 }

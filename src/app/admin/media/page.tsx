@@ -279,7 +279,10 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
                       >
                         打开音频
                       </a>
-                      <CopyButton value={toAudioMarkdown(blob.url, getFileName(blob.pathname))} />
+                      <CopyButton
+                        value={toAudioMarkdown(blob.url, getFileName(blob.pathname))}
+                        label="复制 Markdown 链接"
+                      />
                       <CopyButton value={blob.url} />
                       <form action={deleteAudioAction.bind(null, blob.pathname)}>
                         <SubmitButton label="删除" pendingLabel="删除中..." variant="danger" />
