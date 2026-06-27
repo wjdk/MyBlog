@@ -338,10 +338,15 @@ function AudioBlock({ src, title }: { src: string; title?: string }) {
 function parseAudioBlock(line: string) {
   const value = line.trim();
   const audioDirective = value.match(/^@\[audio(?::\s*([^\]]+))?]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)$/i);
+  const titledAudioDirective = value.match(/^@\[([^\]]+)]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)$/i);
   const audioLink = value.match(/^\[audio(?::\s*([^\]]+))?]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)$/i);
-  const match = audioDirective ?? audioLink;
+  const match = audioDirective ?? titledAudioDirective ?? audioLink;
 
   if (match) {
+    if (match === titledAudioDirective && !isAudioUrl(match[2])) {
+      return null;
+    }
+
     const src = safeUrl(match[2]);
 
     if (src === "#") {
