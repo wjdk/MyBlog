@@ -8,7 +8,7 @@ export async function SiteHeader() {
   const admin = user?.role === "admin";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-stone-900/10 bg-[#fbf8f1]/82 backdrop-blur-xl">
+    <header className="home-yanti sticky top-0 z-40 border-b border-stone-900/10 bg-[#fbf8f1]/82 backdrop-blur-xl">
       <div className="mx-auto flex min-h-16 max-w-[100rem] flex-wrap items-center justify-between gap-3 px-5 py-3">
         <Link
           href="/"
