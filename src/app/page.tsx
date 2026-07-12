@@ -19,10 +19,7 @@ export default async function Home() {
             <p className="text-xs font-semibold tracking-[0.22em] text-[#2f6f73]">
               CHIYU JOURNAL · 池鱼手记
             </p>
-            <h1 className="mt-7 max-w-4xl font-serif text-[clamp(2.8rem,6vw,5.5rem)] font-semibold leading-[1.04] tracking-[-0.05em] text-stone-950 text-balance">
-              在代码与生活之间，留下持续生长的笔记。
-            </h1>
-            <p className="mt-8 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg sm:leading-9 sm:text-pretty">
+            <p className="mt-7 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg sm:leading-9 sm:text-pretty">
               收录项目开发笔记，学习笔记，技术笔记和生活日常。
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-5">
