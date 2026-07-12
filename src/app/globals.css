@@ -86,6 +86,39 @@ p {
   font-family: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
+.markdown-editor-input {
+  caret-color: var(--accent);
+  font-family:
+    "Maple Mono NF CN",
+    "Sarasa Mono SC",
+    "Noto Sans Mono CJK SC",
+    "Microsoft YaHei UI",
+    "Microsoft YaHei",
+    ui-monospace,
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-ligatures: none;
+  letter-spacing: 0.012em;
+  line-height: 1.85;
+  tab-size: 2;
+  text-rendering: optimizeLegibility;
+}
+
+.markdown-editor-input::placeholder {
+  color: #a0978b;
+  font-family:
+    "Noto Sans SC",
+    "Microsoft YaHei UI",
+    "Microsoft YaHei",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0;
+}
+
 .font-blackletter {
   font-family:
     "Old English Text MT",

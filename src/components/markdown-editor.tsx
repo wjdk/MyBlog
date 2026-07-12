@@ -213,7 +213,7 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
             name="content"
             value={value}
             rows={18}
-            className="min-h-[28rem] w-full resize-y border-0 bg-white px-4 py-4 font-mono text-sm leading-7 text-stone-950 outline-none"
+            className="markdown-editor-input min-h-[28rem] w-full resize-y border-0 bg-white px-5 py-5 text-stone-950 outline-none"
             placeholder="支持多级标题、表格、引用、代码块、图片和 [文字](链接)"
             onChange={(event) => setValue(event.target.value)}
           />
