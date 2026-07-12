@@ -9,35 +9,41 @@ export default async function Home() {
   const [posts, tags] = await Promise.all([listPosts(), listTags()]);
 
   return (
-    <main id="main-content" className="home-yanti">
+    <main id="main-content">
       <SiteHeader />
-      <section className="border-b border-stone-900/10">
-        <div className="mx-auto grid max-w-[100rem] gap-10 overflow-hidden px-5 pb-16 pt-14 lg:grid-cols-[1fr_340px] lg:items-end lg:overflow-visible lg:pt-20">
-          <div className="min-w-0 max-w-[20rem] sm:max-w-none">
-            <p className="font-blackletter text-base font-semibold tracking-[0.18em] text-[#2f6f73] sm:text-lg">
-              CHIYU JOURNAL
+      <section className="relative overflow-hidden border-b border-stone-900/10">
+        <div className="pointer-events-none absolute -right-32 top-12 size-[30rem] rounded-full border border-[#2f6f73]/10" />
+        <div className="pointer-events-none absolute -right-12 top-32 size-72 rounded-full border border-[#2f6f73]/10" />
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-5 pb-20 pt-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-end lg:px-10 lg:pb-24 lg:pt-24">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[#2f6f73]">
+              CHIYU JOURNAL · 池鱼手记
             </p>
-            <p className="mt-6 max-w-[20rem] text-base leading-8 text-stone-600 sm:max-w-full sm:text-lg sm:text-pretty lg:max-w-2xl">
+            <h1 className="mt-7 max-w-4xl font-serif text-[clamp(2.8rem,6vw,5.5rem)] font-semibold leading-[1.04] tracking-[-0.05em] text-stone-950 text-balance">
+              在代码与生活之间，留下持续生长的笔记。
+            </h1>
+            <p className="mt-8 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg sm:leading-9 sm:text-pretty">
               收录项目开发笔记，学习笔记，技术笔记和生活日常。
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap items-center gap-5">
               <Link
                 href="/admin/posts/new"
-                className="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(28,25,23,0.18)] transition hover:-translate-y-0.5 hover:bg-[#24575a] active:translate-y-0"
+                className="inline-flex items-center gap-3 rounded-lg bg-stone-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(28,25,23,0.14)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#24575a] active:translate-y-0"
               >
-                写新文章
+                写新文章 <span aria-hidden="true">↗</span>
               </Link>
               <Link
                 href="/archive"
-                className="rounded-full border border-stone-300/90 bg-white/65 px-5 py-3 text-sm font-semibold text-stone-900 transition hover:-translate-y-0.5 hover:border-[#2f6f73] hover:bg-white active:translate-y-0"
+                className="border-b border-stone-400 py-2 text-sm font-semibold text-stone-700 transition hover:border-[#2f6f73] hover:text-[#24575a]"
               >
-                浏览归档
+                浏览全部归档
               </Link>
             </div>
           </div>
-          <div className="w-full min-w-0 max-w-[20rem] overflow-hidden rounded-[1.5rem] bg-stone-950 p-6 text-white shadow-[0_24px_70px_rgba(28,25,23,0.25)] sm:max-w-full">
-            <p className="text-sm text-stone-300">当前内容</p>
-            <div className="mt-6 grid grid-cols-1 gap-3 text-center sm:grid-cols-2">
+
+          <div className="border-y border-stone-900/15 py-5 lg:mb-2">
+            <p className="text-xs font-medium tracking-[0.16em] text-stone-500">站点收录</p>
+            <div className="mt-6 grid grid-cols-2 divide-x divide-stone-900/15">
               <Stat value={posts.length} label="文章" />
               <Stat value={tags.length} label="标签" />
             </div>
@@ -45,21 +51,23 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[100rem] gap-10 px-5 py-14 lg:grid-cols-[1fr_300px]">
-        <div>
-          <div className="mb-7 flex items-end justify-between">
+      <section className="mx-auto grid max-w-7xl gap-14 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:px-10 lg:py-24">
+        <div className="min-w-0">
+          <div className="mb-4 flex items-end justify-between border-b border-stone-900/15 pb-5">
             <div>
-              <h2 className="font-serif text-3xl font-semibold text-stone-950">最新文章</h2>
+              <p className="text-xs font-semibold tracking-[0.18em] text-[#2f6f73]">LATEST</p>
+              <h2 className="mt-2 font-serif text-3xl font-semibold text-stone-950 sm:text-4xl">最新文章</h2>
             </div>
+            <span className="font-mono text-sm text-stone-400">{String(posts.length).padStart(2, "0")}</span>
           </div>
 
           {posts.length === 0 ? (
-            <div className="rounded-[1.25rem] border border-dashed border-stone-300 bg-white/70 p-8 text-stone-600">
-              <p className="text-lg font-semibold text-stone-950">还没有已发布文章</p>
-              <p className="mt-2">去后台创建第一篇，首页会自动更新。</p>
+            <div className="border-b border-stone-900/15 py-14 text-stone-600">
+              <p className="font-serif text-2xl font-semibold text-stone-950">这里还很安静</p>
+              <p className="mt-3 leading-7">第一篇文章发布后，会从这里开始生长。</p>
             </div>
           ) : (
-            <div className="grid gap-5">
+            <div>
               {posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
@@ -67,15 +75,15 @@ export default async function Home() {
           )}
         </div>
 
-        <aside className="space-y-5 lg:pt-14">
-          <div className="rounded-[1.25rem] bg-[#fffdf8]/90 p-5 shadow-[0_1px_0_rgba(28,25,23,0.08),0_18px_45px_rgba(47,48,43,0.06)]">
-            <h2 className="font-semibold text-stone-950">标签</h2>
+        <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
+          <div className="border-t border-stone-900/20 pt-5">
+            <h2 className="font-serif text-xl font-semibold text-stone-950">按主题阅读</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {tags.map((item) => (
                 <Link
                   key={item.tag}
                   href={`/tags/${encodeURIComponent(item.tag)}`}
-                  className="rounded-md bg-stone-100 px-3 py-1.5 text-sm text-stone-600 transition hover:-translate-y-0.5 hover:bg-[#2f6f73] hover:text-white"
+                  className="rounded-md border border-stone-900/10 bg-white/45 px-3 py-1.5 text-sm text-stone-600 transition hover:border-[#2f6f73]/40 hover:bg-[#2f6f73] hover:text-white"
                 >
                   #{item.tag}
                 </Link>
@@ -90,9 +98,9 @@ export default async function Home() {
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-white/8 p-3">
-      <div className="font-mono text-2xl font-semibold tabular-nums">{value}</div>
-      <div className="mt-1 text-xs text-stone-300">{label}</div>
+    <div className="min-w-0 px-5 first:pl-0">
+      <div className="font-serif text-4xl font-semibold tabular-nums text-stone-950">{value}</div>
+      <div className="mt-2 text-xs text-stone-500">{label}</div>
     </div>
   );
 }
