@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import katex from "katex";
 
 export function MarkdownView({ content }: { content: string }) {
   const lines = content.split("\n");
@@ -106,6 +107,24 @@ export function MarkdownView({ content }: { content: string }) {
     if (inCode) {
       codeLines.push(line);
       continue;
+    }
+
+    const mathDelimiter = blockLine.startsWith("$$") ? "$$" : blockLine.startsWith("\\[") ? "\\]" : null;
+    if (mathDelimiter) {
+      const mathLines = [blockLine.slice(2)];
+      let endIndex = index;
+      while (!mathLines.at(-1)!.trimEnd().endsWith(mathDelimiter) && endIndex + 1 < lines.length) {
+        endIndex += 1;
+        mathLines.push(lines[endIndex]);
+      }
+
+      if (mathLines.at(-1)!.trimEnd().endsWith(mathDelimiter)) {
+        flushList();
+        mathLines[mathLines.length - 1] = mathLines.at(-1)!.trimEnd().slice(0, -2);
+        blocks.push(<MathFormula key={`math-${blocks.length}`} source={mathLines.join("\n").trim()} display />);
+        index = endIndex;
+        continue;
+      }
     }
 
     if (!line.trim()) {
@@ -257,12 +276,25 @@ export function MarkdownView({ content }: { content: string }) {
   flushList();
   flushCode();
 
-  return <div className="markdown-body space-y-7 text-lg text-stone-800">{blocks}</div>;
+  return <div className="markdown-body min-w-0 space-y-7 text-lg text-stone-800">{blocks}</div>;
+}
+
+function MathFormula({ source, display = false }: { source: string; display?: boolean }) {
+  const html = katex.renderToString(source, {
+    displayMode: display,
+    throwOnError: false,
+    trust: false,
+    strict: "ignore",
+    maxExpand: 1000,
+  });
+  const Tag = display ? "div" : "span";
+
+  return <Tag className={display ? "math-display" : "math-inline"} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function renderInline(text: string, keyPrefix: string) {
   const nodes: ReactNode[] = [];
-  const pattern = /(`[^`]+`|!\[[^\]]*]\([^)]+\)|\[[^\]]+]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  const pattern = /(`[^`]+`|\\\$|\\\([\s\S]+?\\\)|\$\$(?:[^$]|\$(?!\$))+\$\$|(?<!\$)\$(?!\s|\$)(?:\\.|[^$\n])+?(?<!\s)\$(?!\$)|!\[[^\]]*]\([^)]+\)|\[[^\]]+]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -280,6 +312,12 @@ function renderInline(text: string, keyPrefix: string) {
           {value.slice(1, -1)}
         </code>,
       );
+    } else if (value === "\\$") {
+      nodes.push("$");
+    } else if (value.startsWith("\\(") || value.startsWith("$$")) {
+      nodes.push(<MathFormula key={key} source={value.slice(2, -2)} />);
+    } else if (value.startsWith("$")) {
+      nodes.push(<MathFormula key={key} source={value.slice(1, -1)} />);
     } else if (value.startsWith("![")) {
       const image = value.match(/^!\[([^\]]*)]\(([^)]+)\)$/);
       if (image) {
@@ -304,14 +342,14 @@ function renderInline(text: string, keyPrefix: string) {
             rel="noreferrer"
             target={isExternalUrl(link[2]) ? "_blank" : undefined}
           >
-            {link[1]}
+            {renderInline(link[1], key)}
           </a>,
         );
       }
     } else if (value.startsWith("**")) {
-      nodes.push(<strong key={key}>{value.slice(2, -2)}</strong>);
+      nodes.push(<strong key={key}>{renderInline(value.slice(2, -2), key)}</strong>);
     } else if (value.startsWith("*")) {
-      nodes.push(<em key={key}>{value.slice(1, -1)}</em>);
+      nodes.push(<em key={key}>{renderInline(value.slice(1, -1), key)}</em>);
     }
 
     lastIndex = pattern.lastIndex;

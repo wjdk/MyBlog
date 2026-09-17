@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
 
 :root {
   --background: #f4f1ea;
@@ -90,6 +91,19 @@ select {
 .markdown-body :where(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-display);
   letter-spacing: -0.025em;
+}
+
+.markdown-body .math-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
+}
+
+.markdown-body .katex {
+  overflow-wrap: normal;
+  word-break: normal;
+  line-break: auto;
 }
 
 .markdown-body .font-mono,

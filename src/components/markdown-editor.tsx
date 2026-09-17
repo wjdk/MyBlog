@@ -220,7 +220,7 @@ export function MarkdownEditor({ defaultValue = "" }: MarkdownEditorProps) {
         ) : null}
 
         {mode !== "edit" ? (
-          <div className="min-h-[28rem] border-t border-stone-200 bg-[#fffdf8] px-5 py-5 lg:border-l lg:border-t-0">
+          <div className="min-h-[28rem] min-w-0 border-t border-stone-200 bg-[#fffdf8] px-5 py-5 lg:border-l lg:border-t-0">
             {value.trim() ? (
               <MarkdownView content={value} />
             ) : (
